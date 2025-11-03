@@ -2,7 +2,8 @@
 A sensor fusion system for maintaining zone 2 training and enhancing user motivation.
 
 Research Aims:
-    The aim of this project is to thoroughly research areas such as optimal zones for aerobic training, Modern sensor technologies used in exercise monitoring and the Influences of media on motivation. Additionally, the project aims to design a develop an exercise enhancement system that conducts a VT1 test to for calibration and utilises sensor fusion to monitor heart rate and cadence, thus allowing for the maintenance of zone 2 training at high volumes. Finally, to enhance motivation during training the project aims to integrate adaptive media controls. 
+
+The aim of this project is to thoroughly research areas such as optimal zones for aerobic training, Modern sensor technologies used in exercise monitoring and the Influences of media on motivation. Additionally, the project aims to design a develop an exercise enhancement system that conducts a VT1 test to for calibration and utilises sensor fusion to monitor heart rate and cadence, thus allowing for the maintenance of zone 2 training at high volumes. Finally, to enhance motivation during training the project aims to integrate adaptive media controls. 
 
 Research Objectives:
 
