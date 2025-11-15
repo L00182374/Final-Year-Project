@@ -1,0 +1,71 @@
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native / generated
+/ios/
+/android/
+android/.gradle/
+android/app/build/
+ios/Pods/
+ios/build/
+ios/DerivedData/
+
+# Native certs / keys
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+
+# local env files and secrets
+.env
+.env.*.local
+.env.local
+
+# typescript
+*.tsbuildinfo
+
+# lockfiles 
+package-lock.json
+
+# Python / backend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+pip-delete-this-directory.txt
+/*.egg-info
+dist/
+
+# IDE / editor
+.vscode/
+.idea/
+
+# logs
+logs/
+*.log
+
+# misc
+app-example
