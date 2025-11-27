@@ -4,6 +4,7 @@ A sensor fusion system for maintaining zone 2 training and enhancing user motiva
 ## Setup Requirements:
    --Node.js latest
    --Android Studio latest
+   --Java version 11
 
 ## Setup Instructions:
 Run the following commands in your terminal/IDE:
