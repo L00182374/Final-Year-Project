@@ -8,12 +8,14 @@ A sensor fusion system for maintaining zone 2 training and enhancing user motiva
 ## Setup Instructions:
 Run the following commands in your terminal/IDE:
   
-   --npm install expo
-   --npx create-expo-app@latest
-   --npm install react-native-ble-plx
-   --(if necessary)npm audit fix
-   --(for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel 
-   --
+   - npm install expo
+   - npx create-expo-app@latest
+   - npm install react-native-ble-plx
+   - npx expo install expo-dev-client
+   - npx expo install expo-device
+   - (if necessary)npm audit fix
+   - (for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel 
+   - 
    
 ## Usage intructions:
 
