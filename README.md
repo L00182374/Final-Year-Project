@@ -16,7 +16,12 @@ Run the following commands in your terminal/IDE:
    - (if necessary)npm audit fix
    - (for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel 
    - 
-   
+
+## Build Instructions:
+   - npx expo prebuild
+   - npx expo run:android (--device to be added if building on android device)
+   - 
+
 ## Usage intructions:
 
 
