@@ -4,6 +4,7 @@ A sensor fusion system for maintaining zone 2 training and enhancing user motiva
 ## Setup Requirements:
    --Node.js latest
    --Android Studio latest
+   --Java version 11
 
 ## Setup Instructions:
 Run the following commands in your terminal/IDE:
@@ -13,9 +14,14 @@ Run the following commands in your terminal/IDE:
    - npm install react-native-ble-plx
    - npx expo install expo-dev-client
    - npx expo install expo-device
+   - npm install -g eas-cli
+   - eas login
+   - eas init
+   - eas build:configure(select Android)
+   - npx expo install --check
+   - eas build --profile development --platform android
    - (if necessary)npm audit fix
    - (for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel 
-   - 
 
 ## Build Instructions:
    - npx expo prebuild
@@ -23,7 +29,9 @@ Run the following commands in your terminal/IDE:
    - 
 
 ## Usage intructions:
-
+   - build the apk and run it on your phone by scanning the eas qr code
+   - ensure bluetooth is on
+   - test the app and ensure everything is setup correctly
 
 ## Research Aims:
 
