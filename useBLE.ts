@@ -1,11 +1,19 @@
 // src/permissions.ts
 import { PermissionsAndroid, Platform } from "react-native";
 import * as Device from "expo-device";
+import { BleManager } from 'react-native-ble-plx'
 
-/**
- * Request Android BLE permissions.
- * Returns true if all required permissions are granted.
- */
+
+// Standard BLE UUIDs for services and characteristics
+const HR_SERVICE = "180d";
+const HR_MEASUREMENT_CHAR = "2a37";
+
+const CADENCE_SERVICE = "1816";
+const CADENCE_MEASUREMENT_CHAR = "2a5b";
+
+
+ //Request Android BLE permissions.
+ //Returns true if all required permissions are granted.
 export async function requestBlePermissions(): Promise<boolean> {
   if (Platform.OS !== "android") {
     // iOS: no runtime permission for CoreBluetooth (Info.plist entries only)
@@ -69,4 +77,27 @@ export async function requestBlePermissions(): Promise<boolean> {
     console.warn("Failed to request BLE permissions:", error);
     return false;
   }
+}
+
+// Initialize BLE Manager
+export const manager = new BleManager()
+
+// function to scan and connect to a BLE device
+function scanAndConnect() {
+  manager.startDeviceScan(null, null, (error, device) => {
+    if (error) {
+      // Handle error, scanning will be stopped automatically
+      return
+    }
+
+    // Check if it is a device you are looking for based on advertisement data
+    // or other criteria.
+    if (device.name === 'Wahoo RPM Cadence' || device.name === 'RPM Cadence') {
+      
+      // Stop scanning as it's not necessary if you are scanning for one device.
+      manager.stopDeviceScan()
+
+      // Proceed with connection.
+    }
+  })
 }
