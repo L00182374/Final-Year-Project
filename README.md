@@ -1,5 +1,8 @@
 # Final Year Project
-A sensor fusion system for maintaining zone 2 training and enhancing user motivation.
+Project Title: A sensor fusion system for maintaining zone 2 training and enhancing user motivation.
+
+Description: The project consists of a react native/expo mobile application, multiple BLE sensors (Wahoo RPM Cadence, Garmin Chest strap and Google Pixel Watch 3) and a Fast API backend for data storage and analytics. 
+The purpose of the project is to create an application that bolsters user motivation and simultaneously enhances the quality of their training via sensor fusion. 
 
 ## Setup Requirements:
    --Node.js latest
@@ -23,15 +26,19 @@ Run the following commands in your terminal/IDE:
    - (if necessary)npm audit fix
    - (for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel 
 
-## Build Instructions:
+## Build/Installation Instructions:
    - npx expo prebuild
    - npx expo run:android (--device to be added if building on android device)
    - 
 
-## Usage intructions:
+## Usage Intructions:
    - build the apk and run it on your phone by scanning the eas qr code
    - ensure bluetooth is on
    - test the app and ensure everything is setup correctly
+
+## Usage Examples:
+
+## Technologies Used:
 
 ## Research Aims:
 
@@ -67,5 +74,5 @@ The aim of this project is to thoroughly research areas such as optimal zones fo
 
 -	To allow the user to select zone 3 target to allow them to improve their aerobic capacity and add diversity to their training.
 
-
+## License Information:
 (if you're using a dataset with a licence select the same licence as that dataset)
