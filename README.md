@@ -24,7 +24,8 @@ Run the following commands in your terminal/IDE:
    - npx expo install --check
    - eas build --profile development --platform android
    - (if necessary)npm audit fix
-   - (for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel 
+   - (for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel
+   - If necessary create an App.tsx file 
 
 ## Build/Installation Instructions:
    - npx expo prebuild
