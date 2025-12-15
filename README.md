@@ -15,6 +15,10 @@ Run the following commands in your terminal/IDE:
    - npm install expo
    - npx create-expo-app@latest
    - npm install react-native-ble-plx
+   - npm install react-native-safe-area-context
+   - npm install @react-navigation/native
+   - npm install @react-navigation/native-stack
+   - npm install @react-native-async-storage/async-storage
    - npx expo install expo-dev-client
    - npx expo install expo-device
    - npm install -g eas-cli
