@@ -36,7 +36,7 @@ Run the following commands in your terminal/IDE:
    - npx expo run:android (--device to be added if building on android device)
 
    For EAS
-   - eas build --profile development --platform android 
+   - eas build --profile development --platform android (this has to be ran from your root or the correct folder or it will create issues)
 
 ## Usage Intructions:
    - build the apk and run it on your phone by scanning the eas qr code
