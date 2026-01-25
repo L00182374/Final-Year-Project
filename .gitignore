@@ -46,9 +46,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# lockfiles 
-package-lock.json
-
 # Python / backend
 __pycache__/
 *.py[cod]
