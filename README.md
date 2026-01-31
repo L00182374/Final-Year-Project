@@ -47,6 +47,9 @@ Run the following commands in your terminal/IDE:
 
 ## Technologies Used:
 
+## VsCode Extensions Used:
+   - ESLint
+
 ## Research Aims:
 
 The aim of this project is to thoroughly research areas such as optimal zones for aerobic training, Modern sensor technologies used in exercise monitoring and the Influences of media on motivation. Additionally, the project aims to design a develop an exercise enhancement system that conducts a VT1 test to for calibration and utilises sensor fusion to monitor heart rate and cadence, thus allowing for the maintenance of zone 2 training at high volumes. Finally, to enhance motivation during training the project aims to integrate adaptive media controls. 
