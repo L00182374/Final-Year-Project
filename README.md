@@ -49,6 +49,7 @@ Run the following commands in your terminal/IDE:
 
 ## VsCode Extensions Used:
    - ESLint
+   - Prettier
 
 ## Research Aims:
 
