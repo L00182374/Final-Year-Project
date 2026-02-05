@@ -1,0 +1,98 @@
+name: "User story"
+description: "User facing functionality: screens, flows, rules."
+title: "[Story]: "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      description: "As a ... I want ... so that ..."
+      placeholder: "As a cyclist, I want the app to show my current zone so that I can stay in Zone 2."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - ble
+        - vt1
+        - zonemanager
+        - media
+        - logging
+        - backend
+        - dashboard
+        - ux
+        - docs
+        - testing
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: "Must be testable. Use bullet points."
+      placeholder: |
+        - Given VT1 is saved, when a session starts, the app displays Zone IN/OUT at 1 Hz.
+        - If HR is unavailable for >3s, show 'HR unavailable' state.
+        - Zone changes use hysteresis to prevent flickering.
+    validations:
+      required: true
+
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow / UX notes
+      description: "What screen, what buttons, what user path?"
+      placeholder: "Home -> Start Session -> Live Metrics -> End -> Summary"
+    validations:
+      required: false
+
+  - type: textarea
+    id: edge
+    attributes:
+      label: Edge cases and failure modes
+      placeholder: |
+        - HR sensor disconnect mid-session
+        - Cadence stalls at 0 RPM
+        - Permissions denied
+    validations:
+      required: false
+
+  - type: textarea
+    id: telemetry
+    attributes:
+      label: Logging / telemetry
+      description: "What should be logged to CSV and when?"
+      placeholder: |
+        - On sensor connect/disconnect
+        - On zone transitions
+        - On media pause/resume events
+    validations:
+      required: false
+
+  - type: textarea
+    id: testplan
+    attributes:
+      label: Test plan and evidence required
+      description: "What will be attached as proof?"
+      placeholder: |
+        - Screenshot/video of screen
+        - Log snippet from session CSV
+        - Unit test link if applicable
+    validations:
+      required: true
