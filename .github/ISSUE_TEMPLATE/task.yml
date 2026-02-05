@@ -1,0 +1,64 @@
+name: "Engineering task"
+description: "Internal implementation work refactor, config, tooling, schemas."
+title: "[Task]: "
+labels: ["task"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - ble
+        - vt1
+        - zonemanager
+        - media
+        - logging
+        - backend
+        - dashboard
+        - ux
+        - docs
+        - testing
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: "What am I doing and why?"
+      placeholder: "Add a stable CSV schema to support session export and later analysis."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      placeholder: |
+        - Define CSV columns + types
+        - Implement writer
+        - Add sample export
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of done
+      placeholder: |
+        - Code merged to main
+        - Basic tests run typecheck + any unit tests
+        - Evidence: sample CSV attached or linked
+    validations:
+      required: true

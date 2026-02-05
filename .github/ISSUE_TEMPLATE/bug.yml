@@ -1,0 +1,70 @@
+name: "Bug report"
+description: "Something is broken or incorrect."
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - ble
+        - vt1
+        - zonemanager
+        - media
+        - logging
+        - backend
+        - dashboard
+        - ux
+        - docs
+        - testing
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1) Open app
+        2) Tap Scan
+        3) Select Pixel Watch
+        4) Crash occurs
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      placeholder: "App connects and shows HR."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      placeholder: "App freezes and shows blank screen."
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      placeholder: |
+        - Device: Pixel Watch
+        - Android: 14
+        - Expo SDK: 50
+        - Build: dev-client / EAS
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      placeholder: "Paste console logs or attach screenshots."
+    validations:
+      required: false
