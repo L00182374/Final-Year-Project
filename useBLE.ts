@@ -1,4 +1,4 @@
-// src/permissions.ts
+// src/useBLE.ts
 import { PermissionsAndroid, Platform } from "react-native";
 import * as Device from "expo-device";
 import { BleManager } from 'react-native-ble-plx'
