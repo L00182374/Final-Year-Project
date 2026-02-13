@@ -26,6 +26,7 @@ Run the following commands in your terminal/IDE:
    - eas init
    - eas build:configure(select Android)
    - npx expo install --check
+   - npx expo prebuild
    - eas build --profile development --platform android
    - (if necessary)npm audit fix
    - (for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel
