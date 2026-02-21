@@ -1,529 +1,370 @@
-// ble.tsx  
+// ble.tsx
 
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"; 
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
-import { BleManager, Device } from "react-native-ble-plx"; 
+import { BleManager, Device } from "react-native-ble-plx";
 
-import { Buffer } from "buffer"; 
+import { Buffer } from "buffer";
 
-import { requestBlePermissions } from "./permissions"; 
+import { requestBlePermissions } from "./permissions";
 
- 
+const HR_SERVICE = "180d";
 
-const HR_SERVICE = "180d"; 
+const HR_MEASUREMENT_CHAR = "2a37";
 
-const HR_MEASUREMENT_CHAR = "2a37"; 
+const CSC_SERVICE = "1816";
 
- 
+const CSC_MEASUREMENT_CHAR = "2a5b";
 
-const CSC_SERVICE = "1816"; 
+function parseHeartRate(base64Value: string): number | null {
+  try {
+    const b = Buffer.from(base64Value, "base64");
 
-const CSC_MEASUREMENT_CHAR = "2a5b"; 
+    const flag = b.readUInt8(0);
 
- 
+    const hr16 = (flag & 0x01) !== 0;
 
-function parseHeartRate(base64Value: string): number | null { 
+    return hr16 ? b.readUInt16LE(1) : b.readUInt8(1);
+  } catch (e) {
+    console.warn("parseHeartRate error", e);
 
-  try { 
+    return null;
+  }
+}
 
-    const b = Buffer.from(base64Value, "base64"); 
+function parseCSC(base64Value: string) {
+  try {
+    const b = Buffer.from(base64Value, "base64");
 
-    const flag = b.readUInt8(0); 
+    let offset = 0;
 
-    const hr16 = (flag & 0x01) !== 0; 
+    const flags = b.readUInt8(offset);
 
-    return hr16 ? b.readUInt16LE(1) : b.readUInt8(1); 
+    offset += 1;
 
-  } catch (e) { 
+    const crankPresent = (flags & 0x02) !== 0;
 
-    console.warn("parseHeartRate error", e); 
+    if (!crankPresent) return null;
 
-    return null; 
+    // skip wheel if present
 
-  } 
+    const wheelPresent = (flags & 0x01) !== 0;
 
-} 
+    if (wheelPresent) {
+      offset += 4; // cumulative wheel revs
 
- 
+      offset += 4; // last wheel event time
+    }
 
-function parseCSC(base64Value: string) { 
+    const cumulativeCrankRevs = b.readUInt16LE(offset);
 
-  try { 
+    offset += 2;
 
-    const b = Buffer.from(base64Value, "base64"); 
+    const lastCrankEventTime = b.readUInt16LE(offset);
 
-    let offset = 0; 
+    offset += 2;
 
- 
+    return { cumulativeCrankRevs, lastCrankEventTime };
+  } catch (e) {
+    console.warn("parseCSC error", e);
 
-    const flags = b.readUInt8(offset); 
+    return null;
+  }
+}
 
-    offset += 1; 
+type BleState = {
+  isScanning: boolean;
 
- 
+  devices: Device[];
 
-    const crankPresent = (flags & 0x02) !== 0; 
+  hrDevice: Device | null;
 
-    if (!crankPresent) return null; 
+  cadenceDevice: Device | null;
 
- 
+  heartRate: number | null;
 
-    // skip wheel if present 
+  cadence: number | null;
 
-    const wheelPresent = (flags & 0x01) !== 0; 
+  startScan: () => Promise<void>;
 
-    if (wheelPresent) { 
+  stopScan: () => void;
 
-      offset += 4; // cumulative wheel revs 
+  connectAsHeartRate: (device: Device) => Promise<void>;
 
-      offset += 4; // last wheel event time 
+  connectAsCadence: (device: Device) => Promise<void>;
 
-    } 
+  disconnectAll: () => Promise<void>;
+};
 
- 
+const BleContext = createContext<BleState | null>(null);
 
-    const cumulativeCrankRevs = b.readUInt16LE(offset); 
+export function BleProvider({ children }: { children: React.ReactNode }) {
+  const managerRef = useRef<BleManager | null>(null);
 
-    offset += 2; 
+  if (!managerRef.current) managerRef.current = new BleManager();
 
- 
+  const manager = managerRef.current;
 
-    const lastCrankEventTime = b.readUInt16LE(offset); 
+  const [isScanning, setIsScanning] = useState(false);
 
-    offset += 2; 
+  const [devices, setDevices] = useState<Device[]>([]);
 
- 
+  const [hrDevice, setHrDevice] = useState<Device | null>(null);
 
-    return { cumulativeCrankRevs, lastCrankEventTime }; 
+  const [cadenceDevice, setCadenceDevice] = useState<Device | null>(null);
 
-  } catch (e) { 
+  const [heartRate, setHeartRate] = useState<number | null>(null);
 
-    console.warn("parseCSC error", e); 
+  const [cadence, setCadence] = useState<number | null>(null);
 
-    return null; 
+  const lastCrankRef = useRef<{ revs: number; time: number } | null>(null);
 
-  } 
+  useEffect(() => {
+    return () => {
+      try {
+        manager.stopDeviceScan();
 
-} 
+        manager.destroy();
+      } catch (e) {}
+    };
+  }, [manager]);
 
- 
+  const startScan = async () => {
+    const ok = await requestBlePermissions();
 
-type BleState = { 
+    if (!ok) {
+      console.warn("BLE permissions not granted");
 
-  isScanning: boolean; 
+      return;
+    }
 
-  devices: Device[]; 
+    setDevices([]);
 
- 
+    setIsScanning(true);
 
-  hrDevice: Device | null; 
+    const serviceUUIDs = [HR_SERVICE, CSC_SERVICE];
 
-  cadenceDevice: Device | null; 
+    manager.startDeviceScan(
+      serviceUUIDs,
+      { allowDuplicates: false },
+      (error, device) => {
+        if (error) {
+          console.warn("scan error", error);
 
- 
+          setIsScanning(false);
 
-  heartRate: number | null; 
+          return;
+        }
 
-  cadence: number | null; 
+        if (!device) return;
 
- 
+        setDevices((prev) => {
+          if (prev.find((d) => d.id === device.id)) return prev;
 
-  startScan: () => Promise<void>; 
+          return [...prev, device];
+        });
 
-  stopScan: () => void; 
+        // auto connect
 
- 
+        const name = (device.name ?? "").toLowerCase();
 
-  connectAsHeartRate: (device: Device) => Promise<void>; 
+        if (
+          !hrDevice &&
+          (name.includes("pixel") ||
+            name.includes("garmin") ||
+            name.includes("polar"))
+        ) {
+          void connectAsHeartRate(device);
+        }
 
-  connectAsCadence: (device: Device) => Promise<void>; 
+        if (
+          !cadenceDevice &&
+          (name.includes("wahoo") || name.includes("rpm"))
+        ) {
+          void connectAsCadence(device);
+        }
 
- 
+        // stop once both are connected
 
-  disconnectAll: () => Promise<void>; 
+        if (hrDevice && cadenceDevice) {
+          stopScan();
+        }
+      },
+    );
+  };
 
-}; 
+  const stopScan = () => {
+    try {
+      manager.stopDeviceScan();
+    } catch (e) {}
 
- 
+    setIsScanning(false);
+  };
 
-const BleContext = createContext<BleState | null>(null); 
+  const connectAsHeartRate = async (device: Device) => {
+    try {
+      const ok = await requestBlePermissions();
 
- 
+      if (!ok) return;
 
-export function BleProvider({ children }: { children: React.ReactNode }) { 
+      const connected = await device.connect();
 
-  const managerRef = useRef<BleManager | null>(null); 
+      await connected.discoverAllServicesAndCharacteristics();
 
-  if (!managerRef.current) managerRef.current = new BleManager(); 
+      setHrDevice(connected);
 
-  const manager = managerRef.current; 
+      // monitor HR characteristic
 
- 
+      connected.monitorCharacteristicForService(
+        HR_SERVICE,
+        HR_MEASUREMENT_CHAR,
+        (err, char) => {
+          if (err) {
+            console.warn("HR monitor error", err);
 
-  const [isScanning, setIsScanning] = useState(false); 
+            return;
+          }
 
-  const [devices, setDevices] = useState<Device[]>([]); 
+          if (!char?.value) return;
 
- 
+          const bpm = parseHeartRate(char.value);
 
-  const [hrDevice, setHrDevice] = useState<Device | null>(null); 
+          if (bpm != null) setHeartRate(bpm);
+        },
+      );
+    } catch (e) {
+      console.warn("connectAsHeartRate failed", e);
+    }
+  };
 
-  const [cadenceDevice, setCadenceDevice] = useState<Device | null>(null); 
+  const connectAsCadence = async (device: Device) => {
+    try {
+      const ok = await requestBlePermissions();
 
- 
+      if (!ok) return;
 
-  const [heartRate, setHeartRate] = useState<number | null>(null); 
+      const connected = await device.connect();
 
-  const [cadence, setCadence] = useState<number | null>(null); 
+      await connected.discoverAllServicesAndCharacteristics();
 
- 
+      setCadenceDevice(connected);
 
-  const lastCrankRef = useRef<{ revs: number; time: number } | null>(null); 
+      connected.monitorCharacteristicForService(
+        CSC_SERVICE,
+        CSC_MEASUREMENT_CHAR,
+        (err, char) => {
+          if (err) {
+            console.warn("CSC monitor error", err);
 
- 
+            return;
+          }
 
-  useEffect(() => { 
+          if (!char?.value) return;
 
-    return () => { 
+          const parsed = parseCSC(char.value);
 
-      try { 
+          if (!parsed) return;
 
-        manager.stopDeviceScan(); 
+          const currRevs = parsed.cumulativeCrankRevs;
 
-        manager.destroy(); 
+          const currTime = parsed.lastCrankEventTime; // 1/1024s uint16
 
-      } catch (e) {} 
+          const prev = lastCrankRef.current;
 
-    }; 
+          if (prev) {
+            let dRevs = currRevs - prev.revs;
 
-  }, [manager]); 
+            if (dRevs < 0) dRevs += 0x10000;
 
- 
+            let dTimeRaw = currTime - prev.time;
 
-  const startScan = async () => { 
+            if (dTimeRaw < 0) dTimeRaw += 0x10000;
 
-    const ok = await requestBlePermissions(); 
+            const dSec = dTimeRaw / 1024.0;
 
-    if (!ok) { 
+            if (dSec > 0) {
+              const rpm = (dRevs / dSec) * 60.0;
 
-      console.warn("BLE permissions not granted"); 
+              setCadence(Math.round(rpm));
+            }
+          }
 
-      return; 
+          lastCrankRef.current = { revs: currRevs, time: currTime };
+        },
+      );
+    } catch (e) {
+      console.warn("connectAsCadence failed", e);
+    }
+  };
 
-    } 
+  const disconnectAll = async () => {
+    try {
+      stopScan();
 
- 
+      if (hrDevice) {
+        await hrDevice.cancelConnection();
 
-    setDevices([]); 
+        setHrDevice(null);
+      }
 
-    setIsScanning(true); 
+      if (cadenceDevice) {
+        await cadenceDevice.cancelConnection();
 
- 
+        setCadenceDevice(null);
+      }
 
-    const serviceUUIDs = [HR_SERVICE, CSC_SERVICE]; 
+      setHeartRate(null);
 
- 
+      setCadence(null);
 
-    manager.startDeviceScan(serviceUUIDs, { allowDuplicates: false }, (error, device) => { 
+      lastCrankRef.current = null;
+    } catch (e) {
+      console.warn("disconnectAll failed", e);
+    }
+  };
 
-      if (error) { 
+  const value: BleState = useMemo(
+    () => ({
+      isScanning,
 
-        console.warn("scan error", error); 
+      devices,
 
-        setIsScanning(false); 
+      hrDevice,
 
-        return; 
+      cadenceDevice,
 
-      } 
+      heartRate,
 
-      if (!device) return; 
+      cadence,
 
- 
+      startScan,
 
-      setDevices((prev) => { 
+      stopScan,
 
-        if (prev.find((d) => d.id === device.id)) return prev; 
+      connectAsHeartRate,
 
-        return [...prev, device]; 
+      connectAsCadence,
 
-      }); 
+      disconnectAll,
+    }),
 
- 
+    [isScanning, devices, hrDevice, cadenceDevice, heartRate, cadence],
+  );
 
-      // auto connect  
+  return <BleContext.Provider value={value}>{children}</BleContext.Provider>;
+}
 
-      const name = (device.name ?? "").toLowerCase(); 
+export function useBle() {
+  const ctx = useContext(BleContext);
 
-      if (!hrDevice && (name.includes("pixel") || name.includes("garmin") || name.includes("polar"))) { 
+  if (!ctx) throw new Error("useBle must be used inside BleProvider");
 
-        void connectAsHeartRate(device); 
-
-      } 
-
-      if (!cadenceDevice && (name.includes("wahoo") || name.includes("rpm"))) { 
-
-        void connectAsCadence(device); 
-
-      } 
-
- 
-
-      // stop once both are connected 
-
-      if (hrDevice && cadenceDevice) { 
-
-        stopScan(); 
-
-      } 
-
-    }); 
-
-  }; 
-
- 
-
-  const stopScan = () => { 
-
-    try { 
-
-      manager.stopDeviceScan(); 
-
-    } catch (e) {} 
-
-    setIsScanning(false); 
-
-  }; 
-
- 
-
-  const connectAsHeartRate = async (device: Device) => { 
-
-    try { 
-
-      const ok = await requestBlePermissions(); 
-
-      if (!ok) return; 
-
- 
-
-      const connected = await device.connect(); 
-
-      await connected.discoverAllServicesAndCharacteristics(); 
-
-      setHrDevice(connected); 
-
- 
-
-      // monitor HR characteristic 
-
-      connected.monitorCharacteristicForService(HR_SERVICE, HR_MEASUREMENT_CHAR, (err, char) => { 
-
-        if (err) { 
-
-          console.warn("HR monitor error", err); 
-
-          return; 
-
-        } 
-
-        if (!char?.value) return; 
-
- 
-
-        const bpm = parseHeartRate(char.value); 
-
-        if (bpm != null) setHeartRate(bpm); 
-
-      }); 
-
-    } catch (e) { 
-
-      console.warn("connectAsHeartRate failed", e); 
-
-    } 
-
-  }; 
-
- 
-
-  const connectAsCadence = async (device: Device) => { 
-
-    try { 
-
-      const ok = await requestBlePermissions(); 
-
-      if (!ok) return; 
-
- 
-
-      const connected = await device.connect(); 
-
-      await connected.discoverAllServicesAndCharacteristics(); 
-
-      setCadenceDevice(connected); 
-
- 
-
-      connected.monitorCharacteristicForService(CSC_SERVICE, CSC_MEASUREMENT_CHAR, (err, char) => { 
-
-        if (err) { 
-
-          console.warn("CSC monitor error", err); 
-
-          return; 
-
-        } 
-
-        if (!char?.value) return; 
-
- 
-
-        const parsed = parseCSC(char.value); 
-
-        if (!parsed) return; 
-
- 
-
-        const currRevs = parsed.cumulativeCrankRevs; 
-
-        const currTime = parsed.lastCrankEventTime; // 1/1024s uint16 
-
- 
-
-        const prev = lastCrankRef.current; 
-
-        if (prev) { 
-
-          let dRevs = currRevs - prev.revs; 
-
-          if (dRevs < 0) dRevs += 0x10000; 
-
- 
-
-          let dTimeRaw = currTime - prev.time; 
-
-          if (dTimeRaw < 0) dTimeRaw += 0x10000; 
-
- 
-
-          const dSec = dTimeRaw / 1024.0; 
-
-          if (dSec > 0) { 
-
-            const rpm = (dRevs / dSec) * 60.0; 
-
-            setCadence(Math.round(rpm)); 
-
-          } 
-
-        } 
-
- 
-
-        lastCrankRef.current = { revs: currRevs, time: currTime }; 
-
-      }); 
-
-    } catch (e) { 
-
-      console.warn("connectAsCadence failed", e); 
-
-    } 
-
-  }; 
-
- 
-
-  const disconnectAll = async () => { 
-
-    try { 
-
-      stopScan(); 
-
- 
-
-      if (hrDevice) { 
-
-        await hrDevice.cancelConnection(); 
-
-        setHrDevice(null); 
-
-      } 
-
- 
-
-      if (cadenceDevice) { 
-
-        await cadenceDevice.cancelConnection(); 
-
-        setCadenceDevice(null); 
-
-      } 
-
- 
-
-      setHeartRate(null); 
-
-      setCadence(null); 
-
-      lastCrankRef.current = null; 
-
-    } catch (e) { 
-
-      console.warn("disconnectAll failed", e); 
-
-    } 
-
-  }; 
-
- 
-
-  const value: BleState = useMemo( 
-
-    () => ({ 
-
-      isScanning, 
-
-      devices, 
-
-      hrDevice, 
-
-      cadenceDevice, 
-
-      heartRate, 
-
-      cadence, 
-
-      startScan, 
-
-      stopScan, 
-
-      connectAsHeartRate, 
-
-      connectAsCadence, 
-
-      disconnectAll, 
-
-    }), 
-
-    [isScanning, devices, hrDevice, cadenceDevice, heartRate, cadence] 
-
-  ); 
-
- 
-
-  return <BleContext.Provider value={value}>{children}</BleContext.Provider>; 
-
-} 
-
- 
-
-export function useBle() { 
-
-  const ctx = useContext(BleContext); 
-
-  if (!ctx) throw new Error("useBle must be used inside BleProvider"); 
-
-  return ctx; 
-
+  return ctx;
 }
