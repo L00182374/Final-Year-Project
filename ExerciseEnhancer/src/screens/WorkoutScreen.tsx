@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useBle } from "../ble/ble";
 import { getVt1 } from "../storage/userPrefs";
+import Screen from "../ui/screen";
+
 
 // function to clamp a number between two bounds
 //function clamp(n: number, a: number, b: number) {
@@ -76,6 +78,7 @@ export default function WorkoutScreen() {
   const ss = String(seconds % 60).padStart(2, "0");
 
   return (
+    <Screen>
     <View style={{ flex: 1, backgroundColor: "#0b0b0f", padding: 16 }}>
       <Text style={{ color: "white", fontSize: 22, fontWeight: "800" }}>
         Workout
@@ -227,5 +230,6 @@ export default function WorkoutScreen() {
         </Pressable>
       </View>
     </View>
+    </Screen>
   );
 }

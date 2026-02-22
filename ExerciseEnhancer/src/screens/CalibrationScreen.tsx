@@ -7,6 +7,8 @@ import type { RootStackParamList } from "../../App";
 
 import { useBle } from "../ble/ble";
 import { setVt1 } from "../storage/userPrefs";
+import Screen from "../ui/screen";
+
 
 const STAGE_SECONDS = 180;// 3 minutes per stage.
 
@@ -124,7 +126,8 @@ export default function CalibrationScreen() {
     void finishAndSave(bestEffortVt1());
   };
 
-  return (
+  return (//Wrapping it all in screen to apply consistent ui.
+    <Screen>
     <View style={{ flex: 1, backgroundColor: "#0b0b0f", padding: 16 }}>
       <Text style={{ color: "white", fontSize: 22, fontWeight: "700" }}>VT1 Calibration</Text>
       <Text style={{ color: "#a3a3a3", marginTop: 6 }}>
@@ -206,5 +209,6 @@ export default function CalibrationScreen() {
         </View>
       )}
     </View>
+  </Screen>
   );
 }

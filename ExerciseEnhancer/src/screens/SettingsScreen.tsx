@@ -2,11 +2,14 @@ import React from "react";
 import { View, Text, Pressable, Alert } from "react-native";
 import { clearVt1 } from "../storage/userPrefs";
 import { useBle } from "../ble/ble";
+import Screen from "../ui/screen";
+
 
 export default function SettingsScreen() {
   const { disconnectAll } = useBle();
 
   return (
+    <Screen>
     <View style={{ flex: 1, backgroundColor: "#0b0b0f", padding: 16 }}>
       <Text style={{ color: "white", fontSize: 22, fontWeight: "800" }}>Settings</Text>
 
@@ -42,5 +45,6 @@ export default function SettingsScreen() {
         </Pressable>
       </View>
     </View>
+    </Screen>
   );
 }
