@@ -1,13 +1,23 @@
 // app/_layout.tsx
+import React from "react";
 import { Stack } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 import { BleProvider } from "../src/ble/ble";
 
-export default function Layout() {
-  return (// Provide BLE context to the entire app by wrapping the Stack navigator with BleProvider
-    <BleProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </BleProvider>
+export default function RootLayout() {
+  return (// Provide BLE context to the entire app by wrapping the Stack navigator with BleProvider, 
+          // and also wrap with SafeAreaProvider for UI handling on different screens.
+    <SafeAreaProvider>
+      <BleProvider>
+        <StatusBar style="light" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "fade",
+          }}
+        />
+      </BleProvider>
+    </SafeAreaProvider>
   );
 }
-
-// I might need to change headershown to false as some android stuff blocks ui elements.
