@@ -1,28 +1,34 @@
+// src/screens/HomeScreen.tsx  
 import React, { useEffect, useState } from "react";
 import { View, Text, Pressable } from "react-native";
-//import { useNavigation } from "@react-navigation/native";
-//import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { router } from "expo-router";
-//import type { RootStackParamList } from "../../App";
 import { getVt1 } from "../storage/userPrefs";
 import { useBle } from "../ble/ble";
+import Screen from "../ui/screen";
 
 export default function HomeScreen() {
-  //const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); - old navigation code, not needed with expo-router
   const { hrDevice, cadenceDevice, heartRate, cadence, startScan, stopScan, isScanning } = useBle();
-
   const [vt1, setVt1State] = useState<number | null>(null);
 
   // Load VT1 from storage and set state
   useEffect(() => {
-    (async () => {
-      const vt1 = await getVt1();
-      setVt1State(vt1);
-    })();
+    async function load() {
+      const v = await getVt1();
+      setVt1State(v);
+    }
+    void load();
   }, []);
 
+  async function onScanPressed() {
+    if (isScanning) {
+      stopScan();
+      return;
+    }
+    await startScan();
+  }
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#0b0b0f", padding: 16 }}>
+    <Screen>
       <Text style={{ color: "white", fontSize: 22, fontWeight: "800" }}>Dashboard</Text>
       <Text style={{ color: "#a3a3a3", marginTop: 6 }}>
         VT1: {vt1 ? `${vt1} bpm` : "Not set"}
@@ -49,7 +55,7 @@ export default function HomeScreen() {
           </Text>
 
           <Pressable
-            onPress={isScanning ? stopScan : async () => void startScan()}
+            onPress={onScanPressed}
             style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: "#20202b" }}
           >
             <Text style={{ color: "white", fontWeight: "700", textAlign: "center" }}>
@@ -85,6 +91,6 @@ export default function HomeScreen() {
           </Text>
         </Pressable>
       </View>
-    </View>
+    </Screen>
   );
 }
