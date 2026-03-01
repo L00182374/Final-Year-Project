@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, Pressable, Alert } from "react-native";
 import { clearVt1 } from "../storage/userPrefs";
 import { useBle } from "../ble/ble";
-import Screen from "../ui/screen";
+import Screen from "../ui/Screen";
 
 
 export default function SettingsScreen() {

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useBle } from "../ble/ble";
 import { getVt1 } from "../storage/userPrefs";
-import Screen from "../ui/screen";
+import Screen from "../ui/Screen";
 
 
 // function to clamp a number between two bounds

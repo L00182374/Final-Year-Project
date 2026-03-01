@@ -1,13 +1,10 @@
 // CalibrationScreen.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../../App";
-
+import { useRouter } from "expo-router";
 import { useBle } from "../ble/ble";
 import { setVt1 } from "../storage/userPrefs";
-import Screen from "../ui/screen";
+import Screen from "../ui/Screen";
 
 
 const STAGE_SECONDS = 180;// 3 minutes per stage.
@@ -19,7 +16,7 @@ const STAGES = [
 ];
 
 export default function CalibrationScreen() {
-  const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
   const { startScan, stopScan, isScanning, heartRate, hrDevice } = useBle();
 
   const [running, setRunning] = useState(false);
@@ -114,7 +111,7 @@ export default function CalibrationScreen() {
     try {
       await setVt1(vt1);
       Alert.alert("Saved", `VT1 saved as ${Math.round(vt1)} bpm`);
-      nav.reset({ index: 0, routes: [{ name: "Home" }] });
+      router.replace("/home");
     } catch (e) {
       console.warn("save vt1 failed", e);
       Alert.alert("Error", "Could not save VT1. Try again.");

@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { View, Text, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { getVt1 } from "../storage/userPrefs";
-import Screen from "../ui/screen";
+import Screen from "../ui/Screen";
 
 export default function GateScreen() {
   const router = useRouter();
