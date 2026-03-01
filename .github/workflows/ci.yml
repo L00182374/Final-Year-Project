@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push: #run the ci on push or pull request to main
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint-typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ExerciseEnhancer
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ExerciseEnhancer/package-lock.json
+
+      - run: npm ci # installs node modules
+      - run: npm run lint #lints my code
+      - run: npx tsc --noEmit #tests typescript but --noEmit means it doesn't produce a .js file
