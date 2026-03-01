@@ -191,7 +191,7 @@ export default function CalibrationScreen() {
             style={{ padding: 14, borderRadius: 14, backgroundColor: "#ef4444" }}
           >
             <Text style={{ color: "white", fontWeight: "900", textAlign: "center" }}>
-              I can't speak comfortably
+              I can&apos;t speak comfortably
             </Text>
           </Pressable>
 
