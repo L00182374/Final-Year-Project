@@ -150,16 +150,16 @@ export default function CalibrationScreen() {
         </Pressable>
       </View>
 
-      {!running ? (
+      {!running ? ( //I changed things like cant to can&apos;t as when I ran my linter the apostrophe threw an error and stopped myci
         <View style={{ marginTop: 16, gap: 12 }}>
           <View style={{ backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
             <Text style={{ color: "white", fontWeight: "700" }}>How it works</Text>
             <Text style={{ color: "#a3a3a3", marginTop: 8, lineHeight: 20 }}>
-              You'll cycle through 3 stages at 3 minutes each. When you first notice you can't speak
-              comfortably, tap I can't speak.
-            </Text>
-          </View>
-
+              You&apos;ll cycle through 3 stages at 3 minutes each. When you first notice you can&apos;t speak
+              comfortably, tap I can&apos;t speak.
+            </Text> 
+          </View> 
+                                    
           <Pressable
             onPress={begin}
             style={{ padding: 14, borderRadius: 14, backgroundColor: "#16a34a" }}
