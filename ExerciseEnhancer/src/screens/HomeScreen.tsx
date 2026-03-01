@@ -4,7 +4,7 @@ import { View, Text, Pressable } from "react-native";
 import { router } from "expo-router";
 import { getVt1 } from "../storage/userPrefs";
 import { useBle } from "../ble/ble";
-import Screen from "../ui/screen";
+import Screen from "../ui/Screen";
 
 export default function HomeScreen() {
   const { hrDevice, cadenceDevice, heartRate, cadence, startScan, stopScan, isScanning } = useBle();
