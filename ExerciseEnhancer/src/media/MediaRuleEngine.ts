@@ -3,8 +3,8 @@
 export type MediaIntent = "PLAY" | "PAUSE" | null;
 
 export type MediaRuleConfig = {
-  pauseAfterMs: number;   // such as 10_000
-  resumeAfterMs: number;  // such as 2_000
+  pauseAfterMs: number; // such as 10_000
+  resumeAfterMs: number; // such as 2_000
   enabled: boolean;
 };
 
@@ -52,7 +52,7 @@ export function stepMediaRule(params: {
     const next: MediaRuleState = {
       ...state,
       outSinceMs: null,
-      inSinceMs: state.inSinceMs ?? nowMs,// ?? means if the first thing is null then assign the second
+      inSinceMs: state.inSinceMs ?? nowMs, // ?? means if the first thing is null then assign the second
     };
 
     if (state.mode === "PAUSED") {
