@@ -3,7 +3,12 @@ import { View, Text, Pressable } from "react-native";
 import { useBle } from "../ble/ble";
 import { getVt1 } from "../storage/userPrefs";
 import Screen from "../ui/Screen";
-
+import { useInAppAudio } from "../media/useInAppAudio";
+import {
+  defaultMediaRuleConfig,
+  defaultMediaRuleState,
+  stepMediaRule,
+} from "../media/MediaRuleEngine";
 
 // function to clamp a number between two bounds
 //function clamp(n: number, a: number, b: number) {
@@ -11,6 +16,16 @@ import Screen from "../ui/Screen";
 //} Don't need this anymore.     its old
 
 export default function WorkoutScreen() {
+  //Media initialisation section Start.
+  const audio = useInAppAudio();
+
+  const [simulateZone, setSimulateZone] = useState(true);
+  const [dummyInZone, setDummyInZone] = useState(true);
+
+  const mediaCfgRef = useRef(defaultMediaRuleConfig);
+  const mediaStateRef = useRef(defaultMediaRuleState);
+  //Media section End.
+
   const { heartRate, cadence } = useBle();
 
   const [vt1, setVt1State] = useState<number | null>(null);
@@ -77,159 +92,223 @@ export default function WorkoutScreen() {
   const mm = Math.floor(seconds / 60);
   const ss = String(seconds % 60).padStart(2, "0");
 
+  // These are for testing Media etc, I can set inzone off and on to see effects in action.
+  const realInZone = zone === "ZONE 2";
+  const inZone = simulateZone ? dummyInZone : realInZone;
+
+  //This is an effect that ticks the media rule engine every second only when active is true.
+  useEffect(() => {
+    if (!active) return;
+
+    const t = setInterval(() => {
+      const nowMs = Date.now();
+      const { nextState, intent } = stepMediaRule({
+        nowMs,
+        inZone,
+        config: mediaCfgRef.current,
+        state: mediaStateRef.current,
+      });
+
+      mediaStateRef.current = nextState;
+
+      if (intent === "PAUSE") void audio.pause();
+      if (intent === "PLAY") void audio.play();
+    }, 1000);
+
+    return () => clearInterval(t);
+  }, [active, inZone, audio]);
+  // End of media rule testing and media effect.
+
   return (
     <Screen>
-    <View style={{ flex: 1, backgroundColor: "#0b0b0f", padding: 16 }}>
-      <Text style={{ color: "white", fontSize: 22, fontWeight: "800" }}>
-        Workout
-      </Text>
-
-      <View
-        style={{
-          marginTop: 14,
-          backgroundColor: "#14141c",
-          borderRadius: 16,
-          padding: 14,
-        }}
-      >
-        <Text style={{ color: "#a3a3a3" }}>Time</Text>
-        <Text
-          style={{
-            color: "white",
-            fontSize: 30,
-            fontWeight: "900",
-            marginTop: 6,
-          }}
-        >
-          {mm}:{ss}
+      <View style={{ flex: 1, backgroundColor: "#0b0b0f", padding: 16 }}>
+        <Text style={{ color: "white", fontSize: 22, fontWeight: "800" }}>
+          Workout
         </Text>
-      </View>
 
-      <View
-        style={{
-          marginTop: 12,
-          backgroundColor: "#14141c",
-          borderRadius: 16,
-          padding: 14,
-        }}
-      >
-        <Text style={{ color: "#a3a3a3" }}>Zone</Text>
         <View
           style={{
-            marginTop: 10,
-            padding: 14,
+            marginTop: 14,
+            backgroundColor: "#14141c",
             borderRadius: 16,
-            backgroundColor: zoneColor,
+            padding: 14,
           }}
         >
+          <Text style={{ color: "#a3a3a3" }}>Time</Text>
           <Text
             style={{
               color: "white",
-              fontSize: 22,
+              fontSize: 30,
               fontWeight: "900",
-              textAlign: "center",
-            }}
-          >
-            {zone}
-          </Text>
-          <Text
-            style={{
-              color: "white",
-              opacity: 0.9,
-              textAlign: "center",
               marginTop: 6,
             }}
           >
-            VT1: {vt1 ? `${vt1} bpm` : "Not set"}
+            {mm}:{ss}
           </Text>
         </View>
-      </View>
 
-      <View style={{ marginTop: 12, flexDirection: "row", gap: 12 }}>
         <View
           style={{
-            flex: 1,
+            marginTop: 12,
             backgroundColor: "#14141c",
             borderRadius: 16,
             padding: 14,
           }}
         >
-          <Text style={{ color: "#a3a3a3" }}>Heart Rate</Text>
-          <Text
+          <Text style={{ color: "#a3a3a3" }}>Zone</Text>
+          <View
             style={{
-              color: "white",
-              fontSize: 26,
-              fontWeight: "900",
-              marginTop: 8,
+              marginTop: 10,
+              padding: 14,
+              borderRadius: 16,
+              backgroundColor: zoneColor,
             }}
           >
-            {hrSmooth != null ? hrSmooth : "--"}
-          </Text>
-          <Text style={{ color: "#a3a3a3", marginTop: 2 }}>bpm</Text>
+            <Text
+              style={{
+                color: "white",
+                fontSize: 22,
+                fontWeight: "900",
+                textAlign: "center",
+              }}
+            >
+              {zone}
+            </Text>
+            <Text
+              style={{
+                color: "white",
+                opacity: 0.9,
+                textAlign: "center",
+                marginTop: 6,
+              }}
+            >
+              VT1: {vt1 ? `${vt1} bpm` : "Not set"}
+            </Text>
+          </View>
         </View>
 
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "#14141c",
-            borderRadius: 16,
-            padding: 14,
-          }}
-        >
-          <Text style={{ color: "#a3a3a3" }}>Cadence</Text>
-          <Text
+        <View style={{ marginTop: 12, flexDirection: "row", gap: 12 }}>
+          <View
             style={{
-              color: "white",
-              fontSize: 26,
-              fontWeight: "900",
-              marginTop: 8,
+              flex: 1,
+              backgroundColor: "#14141c",
+              borderRadius: 16,
+              padding: 14,
             }}
           >
-            {cadSmooth != null ? cadSmooth : "--"}
-          </Text>
-          <Text style={{ color: "#a3a3a3", marginTop: 2 }}>rpm</Text>
+            <Text style={{ color: "#a3a3a3" }}>Heart Rate</Text>
+            <Text
+              style={{
+                color: "white",
+                fontSize: 26,
+                fontWeight: "900",
+                marginTop: 8,
+              }}
+            >
+              {hrSmooth != null ? hrSmooth : "--"}
+            </Text>
+            <Text style={{ color: "#a3a3a3", marginTop: 2 }}>bpm</Text>
+          </View>
+
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: "#14141c",
+              borderRadius: 16,
+              padding: 14,
+            }}
+          >
+            <Text style={{ color: "#a3a3a3" }}>Cadence</Text>
+            <Text
+              style={{
+                color: "white",
+                fontSize: 26,
+                fontWeight: "900",
+                marginTop: 8,
+              }}
+            >
+              {cadSmooth != null ? cadSmooth : "--"}
+            </Text>
+            <Text style={{ color: "#a3a3a3", marginTop: 2 }}>rpm</Text>
+          </View>
+        </View>
+
+        {/* Bottom controls */}
+        <View style={{ marginTop: "auto", flexDirection: "row", gap: 12 }}>
+          <Pressable
+            onPress={() => setActive((v) => !v)}
+            style={{
+              flex: 1,
+              padding: 14,
+              borderRadius: 14,
+              backgroundColor: active ? "#ca8a04" : "#16a34a",
+            }}
+          >
+            <Text
+              style={{ color: "white", fontWeight: "900", textAlign: "center" }}
+            >
+              {active ? "Pause" : "Start"}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              setActive(false);
+              setSeconds(0);
+              hrEmaRef.current = null;
+              cadEmaRef.current = null;
+            }}
+            style={{
+              padding: 14,
+              borderRadius: 14,
+              backgroundColor: "#20202b",
+            }}
+          >
+            <Text style={{ color: "white", fontWeight: "900" }}>Reset</Text>
+          </Pressable>
+
+          {/* placeholder for media control rules */}
+          <Pressable
+            onPress={() => {}} // no functionality yet, it will control music/media in the future
+            style={{
+              padding: 14,
+              borderRadius: 14,
+              backgroundColor: "#20202b",
+            }}
+          >
+            <Text style={{ color: "white", fontWeight: "900" }}>Media</Text>
+          </Pressable>
+          
+          {/* Initial attempt for dummy zone simulation controls */}
+          <Pressable
+            onPress={() => setSimulateZone((v) => !v)}
+            style={{
+              padding: 14,
+              borderRadius: 14,
+              backgroundColor: "#20202b",
+            }}
+          >
+            <Text style={{ color: "white", fontWeight: "900" }}>
+              {simulateZone ? "Sim: ON" : "Sim: OFF"}
+            </Text>
+          </Pressable>
+
+          {simulateZone && (
+            <Pressable
+              onPress={() => setDummyInZone((v) => !v)}
+              style={{
+                padding: 14,
+                borderRadius: 14,
+                backgroundColor: dummyInZone ? "#16a34a" : "#ef4444",
+              }}
+            >
+              <Text style={{ color: "white", fontWeight: "900" }}>
+                {dummyInZone ? "In Zone" : "Out Zone"}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
-
-      {/* Bottom controls */}
-      <View style={{ marginTop: "auto", flexDirection: "row", gap: 12 }}>
-        <Pressable
-          onPress={() => setActive((v) => !v)}
-          style={{
-            flex: 1,
-            padding: 14,
-            borderRadius: 14,
-            backgroundColor: active ? "#ca8a04" : "#16a34a",
-          }}
-        >
-          <Text
-            style={{ color: "white", fontWeight: "900", textAlign: "center" }}
-          >
-            {active ? "Pause" : "Start"}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => {
-            setActive(false);
-            setSeconds(0);
-            hrEmaRef.current = null;
-            cadEmaRef.current = null;
-          }}
-          style={{ padding: 14, borderRadius: 14, backgroundColor: "#20202b" }}
-        >
-          <Text style={{ color: "white", fontWeight: "900" }}>Reset</Text>
-        </Pressable>
-
-        {/* placeholder for media control rules */}
-        <Pressable
-          onPress={() => {}}// no functionality yet, it will control music/media in the future
-          style={{ padding: 14, borderRadius: 14, backgroundColor: "#20202b" }}
-        >
-          <Text style={{ color: "white", fontWeight: "900" }}>Media</Text>
-        </Pressable>
-      </View>
-    </View>
     </Screen>
   );
 }
