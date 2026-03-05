@@ -22,7 +22,7 @@ export function useInAppAudio() {
         const { sound } = await Audio.Sound.createAsync(
           // playing a demp mp3 file stored in assets for testing/demonstration
           require("../../assets/demo.mp3"),
-          { shouldPlay: true, isLooping: true, volume: 1.0 }
+          { shouldPlay: true, isLooping: true, volume: 1.0 },
         );
 
         if (cancelled) {
