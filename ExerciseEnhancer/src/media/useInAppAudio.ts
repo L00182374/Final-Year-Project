@@ -21,8 +21,8 @@ export function useInAppAudio() {
 
         const { sound } = await Audio.Sound.createAsync(
           // playing a demp mp3 file stored in assets for testing/demonstration
-          require("../../assets/demo.mp3"),
-          { shouldPlay: true, isLooping: true, volume: 1.0 },
+          require("../../assets/audio/Demo.mp3"),
+          { shouldPlay: false, isLooping: true, volume: 1.0 },
         );
 
         if (cancelled) {
@@ -32,7 +32,7 @@ export function useInAppAudio() {
 
         soundRef.current = sound;
         setReady(true);
-        setIsPlaying(true);
+        setIsPlaying(false);
       } catch (e) {
         console.warn("Audio init failed", e);
       }
