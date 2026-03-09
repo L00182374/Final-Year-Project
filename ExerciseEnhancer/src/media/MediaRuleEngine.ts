@@ -15,13 +15,13 @@ export type MediaRuleState = {
 };
 
 export const defaultMediaRuleConfig: MediaRuleConfig = {
-  pauseAfterMs: 10_000,
+  pauseAfterMs: 4_000,
   resumeAfterMs: 2_000,
   enabled: true,
 };
 
 export const defaultMediaRuleState: MediaRuleState = {
-  mode: "PLAYING",
+  mode: "PAUSED",
   outSinceMs: null,
   inSinceMs: null,
 };
