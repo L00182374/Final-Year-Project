@@ -10,6 +10,10 @@ The purpose of the project is to create an application that bolsters user motiva
    --Java version 11
 
 ## Setup Instructions:
+For a simple install fork the repository and run npm install or npm ci to install all depencies.
+
+If that doesn't work
+
 Run the following commands in your terminal/IDE:
   
    - npm install expo
