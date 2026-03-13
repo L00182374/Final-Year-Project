@@ -60,8 +60,9 @@ export default function CalibrationScreen() {
 
       try {
         await setVt1(vt1);
-        Alert.alert("Saved", `VT1 saved as ${Math.round(vt1)} bpm`);
-        router.replace("/home");
+        Alert.alert("Saved", `VT1 saved as ${Math.round(vt1)} bpm`, [
+        { text: "OK", onPress: () => router.replace("/home") },//waits until the user selects ok before loading home screen
+        ]);
       } catch (e) {
         console.warn("save vt1 failed", e);
         Alert.alert("Error", "Could not save VT1. Try again.");
