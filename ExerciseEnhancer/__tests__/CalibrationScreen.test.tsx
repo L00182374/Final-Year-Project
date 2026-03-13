@@ -91,6 +91,26 @@ describe("CalibrationScreen", () => {
       expect(mockSetVt1).toHaveBeenCalled();
     });
 
+    expect(alertSpy).toHaveBeenCalledWith(
+      "Saved",
+      "VT1 saved as 150 bpm",
+      expect.any(Array),
+    );
+
+    const successCall = alertSpy.mock.calls.find((call) => call[0] === "Saved");
+
+    expect(successCall).toBeTruthy();
+
+    const buttons = successCall?.[2] as
+      | Array<{ text?: string; onPress?: () => void }>
+      | undefined;
+
+    const okButton = buttons?.find((button) => button.text === "OK");
+
+    expect(okButton).toBeTruthy();
+
+    okButton?.onPress?.();
+
     expect(mockReplace).toHaveBeenCalledWith("/home");
 
     alertSpy.mockRestore();
