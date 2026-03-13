@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useBle } from "../ble/ble";
 import { getVt1 } from "../storage/userPrefs";
 import Screen from "../ui/Screen";
@@ -17,7 +18,7 @@ import {
 
 export default function WorkoutScreen() {
   //Media initialisation section Start.
-  const audio = useInAppAudio();
+  const { ready: audioReady, isPlaying, play, pause } = useInAppAudio();
 
   const [simulateZone, setSimulateZone] = useState(true);
   const [dummyInZone, setDummyInZone] = useState(true);
@@ -96,9 +97,44 @@ export default function WorkoutScreen() {
   const realInZone = zone === "ZONE 2";
   const inZone = simulateZone ? dummyInZone : realInZone;
 
+  const mediaStatusText = !audioReady ? "Loading" : isPlaying ? "Playing" : "Paused";
+  const mediaStatusColor = !audioReady ? "#6b7280" : isPlaying ? "#22c55e" : "#ef4444";
+
+  const toggleManualMedia = async () => {
+    if (!audioReady) return;
+
+    if (isPlaying) {
+      mediaStateRef.current = {
+        ...mediaStateRef.current,
+        mode: "PAUSED",
+        outSinceMs: null,
+        inSinceMs: null,
+      };
+      await pause();
+      return;
+    }
+
+    mediaStateRef.current = {
+      ...mediaStateRef.current,
+      mode: "PLAYING",
+      outSinceMs: null,
+      inSinceMs: null,
+    };
+    await play();
+  };
+
+  // this makes sure that the media state resets when the workout is not active
+  useEffect(() => {
+    if (!active) {
+      mediaStateRef.current = { ...defaultMediaRuleState };
+      void pause();
+    }
+  }, [active, pause]);
+
   //This is an effect that ticks the media rule engine every second only when active is true.
   useEffect(() => {
     if (!active) return;
+    if (!audioReady) return;
 
     const t = setInterval(() => {
       const nowMs = Date.now();
@@ -111,12 +147,12 @@ export default function WorkoutScreen() {
 
       mediaStateRef.current = nextState;
 
-      if (intent === "PAUSE") void audio.pause();
-      if (intent === "PLAY") void audio.play();
+      if (intent === "PAUSE") void pause();
+      if (intent === "PLAY") void play();
     }, 1000);
 
     return () => clearInterval(t);
-  }, [active, inZone, audio]);
+  }, [active, inZone, audioReady, play, pause]);
   // End of media rule testing and media effect.
 
   return (
@@ -184,6 +220,112 @@ export default function WorkoutScreen() {
             >
               VT1: {vt1 ? `${vt1} bpm` : "Not set"}
             </Text>
+          </View>
+        </View>
+
+        <View
+          style={{
+            marginTop: 12,
+            backgroundColor: "#14141c",
+            borderRadius: 18,
+            padding: 10,
+            flexDirection: "row",
+            alignItems: "center",
+            elevation: 4,
+          }}
+        >
+          <View
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 12,
+              backgroundColor: "#20202b",
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 12,
+            }}
+          >
+            <Ionicons name="musical-notes" size={20} color="white" />
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{ color: "white", fontSize: 14, fontWeight: "800" }}
+              numberOfLines={1}
+            >
+              Demo Track
+            </Text>
+
+            <Text
+              style={{ color: "#a3a3a3", fontSize: 12, marginTop: 2 }}
+              numberOfLines={1}
+            >
+              Exercise Enhancer Player
+            </Text>
+
+            <View
+              style={{
+                marginTop: 8,
+                height: 4,
+                borderRadius: 999,
+                backgroundColor: "#20202b",
+                overflow: "hidden",
+              }}
+            >
+              <View
+                style={{
+                  width: isPlaying ? "65%" : "18%",
+                  height: "100%",
+                  backgroundColor: mediaStatusColor,
+                }}
+              />
+            </View>
+          </View>
+
+          <View style={{ alignItems: "flex-end", marginLeft: 12 }}>
+            <View
+              style={{
+                paddingVertical: 4,
+                paddingHorizontal: 8,
+                borderRadius: 999,
+                backgroundColor: mediaStatusColor,
+              }}
+            >
+              <Text style={{ color: "white", fontSize: 11, fontWeight: "800" }}>
+                {mediaStatusText}
+              </Text>
+            </View>
+
+            <Text
+              style={{
+                color: inZone ? "#22c55e" : "#ef4444",
+                fontSize: 11,
+                fontWeight: "700",
+                marginTop: 6,
+              }}
+            >
+              {inZone ? "In Zone" : "Out Zone"}
+            </Text>
+
+            <Pressable
+              onPress={() => void toggleManualMedia()}
+              style={{
+                marginTop: 6,
+                width: 34,
+                height: 34,
+                borderRadius: 17,
+                backgroundColor: "#20202b",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons
+                name={isPlaying ? "pause" : "play"}
+                size={16}
+                color="white"
+                style={{ marginLeft: isPlaying ? 0 : 2 }}
+              />
+            </Pressable>
           </View>
         </View>
 
@@ -257,6 +399,8 @@ export default function WorkoutScreen() {
               setSeconds(0);
               hrEmaRef.current = null;
               cadEmaRef.current = null;
+              mediaStateRef.current = { ...defaultMediaRuleState };
+              void pause();
             }}
             style={{
               padding: 14,
@@ -278,7 +422,7 @@ export default function WorkoutScreen() {
           >
             <Text style={{ color: "white", fontWeight: "900" }}>Media</Text>
           </Pressable>
-          
+
           {/* Initial attempt for dummy zone simulation controls */}
           <Pressable
             onPress={() => setSimulateZone((v) => !v)}
