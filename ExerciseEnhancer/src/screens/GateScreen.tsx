@@ -1,3 +1,4 @@
+// src/screens/GateScreen.tsx
 import React, { useEffect } from "react";
 import { View, Text, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";

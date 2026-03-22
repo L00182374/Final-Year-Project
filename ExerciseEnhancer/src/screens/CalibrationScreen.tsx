@@ -1,4 +1,4 @@
-// CalibrationScreen.tsx
+// src/screens/CalibrationScreen.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert, TextInput } from "react-native";
 import { useRouter } from "expo-router";
