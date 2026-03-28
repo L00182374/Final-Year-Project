@@ -1,6 +1,7 @@
 // src/logging/sessionCsvReader.ts
 import type { CadenceStateLabel, ZoneLabel } from "../zone/ZoneManager";
 
+// Parsed session types are used when reading saved CSV workout files back into the app.
 export type ParsedSessionSample = {
   recordedAtIso: string;
   elapsedMs: number;
@@ -43,6 +44,35 @@ function toBoolean(value: string | undefined): boolean {
   return value === "true";
 }
 
+function toZoneLabel(value: string | undefined): ZoneLabel {
+  if (
+    value === "ZONE 2" ||
+    value === "BELOW" ||
+    value === "ABOVE" ||
+    value === "N/A"
+  ) {
+    return value;
+  }
+
+  return "N/A";
+}
+
+function toCadenceStateLabel(value: string | undefined): CadenceStateLabel {
+  if (
+    value === "HR only" ||
+    value === "Signal lost" ||
+    value === "Stopped" ||
+    value === "Too low" ||
+    value === "OK"
+  ) {
+    return value;
+  }
+
+  return "Signal lost";
+}
+
+// Parse CSV text produced by the app back into a typed session object.
+// This reader assumes that the user is reading a CSV created by the app, so the CSV matches the apps saved session format.
 export function parseSessionCsvText(text: string): ParsedSessionFile {
   const trimmed = text.trim();
 
@@ -79,7 +109,7 @@ export function parseSessionCsvText(text: string): ParsedSessionFile {
 
     return {
       recordedAtIso: row.recordedAtIso ?? "",
-      elapsedMs: Number(row.elapsedMs ?? 0),
+      elapsedMs: toNumber(row.elapsedMs) ?? 0,
 
       heartRateRaw: toNumber(row.heartRateRaw),
       heartRateSmooth: toNumber(row.heartRateSmooth),
@@ -89,13 +119,13 @@ export function parseSessionCsvText(text: string): ParsedSessionFile {
       cadenceSmooth: toNumber(row.cadenceSmooth),
       cadenceFresh: toBoolean(row.cadenceFresh),
 
-      zone: (row.zone as ZoneLabel) ?? "N/A",
-      cadenceState: (row.cadenceState as CadenceStateLabel) ?? "Signal lost",
+      zone: toZoneLabel(row.zone),
+      cadenceState: toCadenceStateLabel(row.cadenceState),
       inZone: toBoolean(row.inZone),
       signalGraceActive: toBoolean(row.signalGraceActive),
 
-      timeInZoneMs: Number(row.timeInZoneMs ?? 0),
-      timeOutOfZoneMs: Number(row.timeOutOfZoneMs ?? 0),
+      timeInZoneMs: toNumber(row.timeInZoneMs) ?? 0,
+      timeOutOfZoneMs: toNumber(row.timeOutOfZoneMs) ?? 0,
 
       mediaPlaying: toBoolean(row.mediaPlaying),
     };
