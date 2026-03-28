@@ -8,6 +8,7 @@ type LiveTrendChartProps = {
   vt1: number | null;
 };
 
+// Replace missing points with the last known value so the chart stays continuous.
 function normaliseSeries(data: Array<number | null>): number[] {
   let last = 0;
 
@@ -48,27 +49,28 @@ export default function LiveTrendChart({
     }> = [
       {
         data: normaliseSeries(hrData),
-        color: (opacity = 1) => `rgba(239, 68, 68, ${opacity})`,
-        strokeWidth: 2,
+        color: () => "rgba(255, 99, 99, 1)",
+        strokeWidth: 3,
       },
       {
         data: normaliseSeries(cadenceData),
-        color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
-        strokeWidth: 2,
+        color: () => "rgba(96, 165, 250, 1)",
+        strokeWidth: 3,
       },
     ];
 
+    // Add VT1 and lower Zone 2 guide lines when calibration is available.
     if (vt1 != null) {
       datasets.push({
         data: buildFlatLine(pointCount, vt1),
-        color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
-        strokeWidth: 2,
+        color: () => "rgba(74, 222, 128, 1)",
+        strokeWidth: 2.5,
       });
 
       datasets.push({
         data: buildFlatLine(pointCount, Math.round(vt1 * 0.85)),
-        color: (opacity = 1) => `rgba(245, 158, 11, ${opacity})`,
-        strokeWidth: 2,
+        color: () => "rgba(251, 191, 36, 1)",
+        strokeWidth: 2.5,
       });
     }
 
@@ -80,7 +82,6 @@ export default function LiveTrendChart({
 
   function handleLayout(event: LayoutChangeEvent) {
     const width = event.nativeEvent.layout.width;
-
     setInnerWidth(Math.max(0, width - 28));
   }
 
@@ -108,7 +109,7 @@ export default function LiveTrendChart({
             withInnerLines
             withOuterLines
             withVerticalLabels={false}
-            withHorizontalLabels={true}
+            withHorizontalLabels
             fromZero={false}
             bezier={false}
             chartConfig={{
@@ -116,18 +117,19 @@ export default function LiveTrendChart({
               backgroundGradientFrom: "#14141c",
               backgroundGradientTo: "#14141c",
               decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(163, 163, 163, ${opacity})`,
-              strokeWidth: 2,
+              color: () => "rgba(255, 255, 255, 1)",
+              labelColor: () => "rgba(200, 200, 200, 1)",
+              strokeWidth: 3,
               propsForBackgroundLines: {
                 strokeDasharray: "",
-                stroke: "#20202b",
+                stroke: "#2a2a36",
                 strokeWidth: 1,
               },
               propsForLabels: {
                 fontSize: 10,
               },
             }}
+            formatYLabel={(value) => `${Math.round(Number(value))}`}
             style={{
               borderRadius: 12,
               alignSelf: "center",
@@ -145,19 +147,19 @@ export default function LiveTrendChart({
           justifyContent: "center",
         }}
       >
-        <Text style={{ color: "#ef4444", fontSize: 12, fontWeight: "700" }}>
+        <Text style={{ color: "#ff6363", fontSize: 12, fontWeight: "700" }}>
           HR
         </Text>
-        <Text style={{ color: "#2563eb", fontSize: 12, fontWeight: "700" }}>
+        <Text style={{ color: "#60a5fa", fontSize: 12, fontWeight: "700" }}>
           Cadence
         </Text>
 
         {vt1 != null ? (
           <>
-            <Text style={{ color: "#22c55e", fontSize: 12, fontWeight: "700" }}>
+            <Text style={{ color: "#4ade80", fontSize: 12, fontWeight: "700" }}>
               VT1
             </Text>
-            <Text style={{ color: "#f59e0b", fontSize: 12, fontWeight: "700" }}>
+            <Text style={{ color: "#fbbf24", fontSize: 12, fontWeight: "700" }}>
               Z2 low
             </Text>
           </>
