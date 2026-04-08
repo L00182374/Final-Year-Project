@@ -5,12 +5,15 @@ Description: The project consists of a react native/expo mobile application, mul
 The purpose of the project is to create an application that bolsters user motivation and simultaneously enhances the quality of their training via sensor fusion. 
 
 ## Setup Requirements:
-   --Node.js latest
-   --Android Studio latest
-   --Java version 11
+   - Node.js latest
+   - Node Package Manager latest
+   - Python latest
+   - Pip Latest
 
 ## Setup Instructions:
-For a simple install fork the repository and run npm install or npm ci to install all depencies.
+For a simple install first fork the repository.
+Then run npm install or npm ci to install all Node depencies.
+Then run pip install -r requirements.txt to install the python libraries 
 
 If that doesn't work
 
