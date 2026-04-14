@@ -1,7 +1,7 @@
 # Final Year Project
 Project Title: A sensor fusion system for maintaining zone 2 training and enhancing user motivation.
 
-Description: The project consists of a react native/expo mobile application, multiple BLE sensors (Wahoo RPM Cadence, Garmin Chest strap and Google Pixel Watch 3) and a Fast API backend for data storage and analytics. 
+Description: The project consists of a react native/expo mobile application, multiple BLE sensors (Wahoo RPM Cadence, Garmin Chest strap and Google Pixel Watch 3) and a Python Media controller that controls media playback in real time based on the zone of the user. 
 The purpose of the project is to create an application that bolsters user motivation and simultaneously enhances the quality of their training via sensor fusion. 
 
 ## Setup Requirements:
@@ -11,9 +11,18 @@ The purpose of the project is to create an application that bolsters user motiva
    - Pip Latest
 
 ## Setup Instructions:
-For a simple install first fork the repository.
-Then run npm install or npm ci to install all Node depencies.
-Then run pip install -r requirements.txt to install the python libraries 
+For a simple installation:
+- first fork the repository.
+- Open your terminal and ensure that you are in the ExerciseEnhancer directory.
+- Then run **npm install** or **npm ci** to install all required Node depencies.
+- Once installed type **npx expo start** / **npx expo start --tunnel** to start the development build and just scan the QR code in the APP
+
+## Python virtual evironment and setup:
+- Ensure that you are in the Python folder.
+- Run **python -m venv .venv** to create a new virtual environment
+- Then activate the virtual environment by running the file in **.venv\Scripts\activate**
+- Then navigate to the folder containing requirements.txt and run **pip install -r requirements.txt** to install the required python libraries
+- Finally run the mediaHelper script to start media playback control.
 
 If that doesn't work
 
