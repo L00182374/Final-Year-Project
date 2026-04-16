@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pynput.keyboard import Controller, Key
 
+# Assigning the FastAPI instance to a variable named app which will be used to handle requests.
 app = FastAPI()
 keyboard = Controller()
 
