@@ -1,8 +1,13 @@
+// src/zone/ZoneManager.ts
 // Zone labels used by the workout screen and media logic.
 export type ZoneLabel = "ZONE 2" | "BELOW" | "ABOVE" | "N/A";
 
-// Cadence state is used to decide whether the cadence aligns with the current Zone.
-export type CadenceStateLabel = "HR only" | "Signal lost" | "Stopped" | "Too low" | "OK";
+export type CadenceStateLabel =
+  | "HR only"
+  | "Signal lost"
+  | "Stopped"
+  | "Too low"
+  | "OK";
 
 export type CadenceStateResult = {
   ok: boolean;
@@ -29,6 +34,7 @@ export type ZoneManagerInput = {
   hrFresh: boolean;
   cadenceFresh: boolean;
   cadenceDeviceConnected: boolean;
+  cadenceRequired: boolean;
 };
 
 export type ZoneManagerState = {
@@ -39,7 +45,7 @@ export type ZoneManagerState = {
   cadenceSmooth: number | null;
 
   cadenceState: CadenceStateResult;
-  rawZone: ZoneLabel;   // rawZone is the zone decision made before hysteresis is applied.
+  rawZone: ZoneLabel;
   zone: ZoneLabel;
 
   candidateZone: ZoneLabel | null;
@@ -93,7 +99,7 @@ export const defaultZoneManagerState: ZoneManagerState = {
   lastTickMs: null,
 };
 
-// Smooth noisy sensor values using exponential moving average EMA smoothing.
+// Smooth noisy sensor values using exponential moving average.
 export function smoothSensorValue(
   previous: number | null,
   next: number | null,
@@ -105,6 +111,7 @@ export function smoothSensorValue(
 }
 
 export function getCadenceState(params: {
+  cadenceRequired: boolean;
   cadenceDeviceConnected: boolean;
   cadenceFresh: boolean;
   cadenceRpm: number | null;
@@ -112,6 +119,7 @@ export function getCadenceState(params: {
   stoppedCadenceRpm: number;
 }): CadenceStateResult {
   const {
+    cadenceRequired,
     cadenceDeviceConnected,
     cadenceFresh,
     cadenceRpm,
@@ -119,11 +127,18 @@ export function getCadenceState(params: {
     stoppedCadenceRpm,
   } = params;
 
-  // If no cadence sensor is connected, fall back to heart rate only for zone decisions.
-  if (!cadenceDeviceConnected) {
+  // HR only mode is only valid when cadence was not required for this workout.
+  if (!cadenceRequired) {
     return {
       ok: true,
       label: "HR only",
+    };
+  }
+
+  if (!cadenceDeviceConnected) {
+    return {
+      ok: false,
+      label: "Signal lost",
     };
   }
 
@@ -196,8 +211,7 @@ function getRawZone(params: {
 }
 
 // Step the zone manager forward using the latest sensor state.
-// Hysteresis is used to reduce flicker around zone boundaries.
-// A grace period is used to avoid drops due to any brief signal loss.
+
 export function stepZoneManager(params: {
   input: ZoneManagerInput;
   state: ZoneManagerState;
@@ -226,6 +240,7 @@ export function stepZoneManager(params: {
   const cadenceSmooth = cadenceNext == null ? null : Math.round(cadenceNext);
 
   const cadenceState = getCadenceState({
+    cadenceRequired: input.cadenceRequired,
     cadenceDeviceConnected: input.cadenceDeviceConnected,
     cadenceFresh: input.cadenceFresh,
     cadenceRpm: cadenceSmooth,
@@ -234,9 +249,10 @@ export function stepZoneManager(params: {
   });
 
   const hrSignalLost = !input.hrFresh || hrSmooth == null;
+
   const cadenceSignalLost =
-    input.cadenceDeviceConnected &&
-    (!input.cadenceFresh || cadenceSmooth == null);
+    input.cadenceRequired &&
+    (!input.cadenceDeviceConnected || !input.cadenceFresh || cadenceSmooth == null);
 
   const hasSignalLoss = hrSignalLost || cadenceSignalLost;
 
@@ -287,7 +303,9 @@ export function stepZoneManager(params: {
     const requiredMs =
       rawZone === "ZONE 2"
         ? config.enterHysteresisMs
-        : config.exitHysteresisMs;
+        : cadenceState.label === "Stopped"
+          ? 0
+          : config.exitHysteresisMs;
 
     if (candidateZone !== rawZone) {
       candidateZone = rawZone;
