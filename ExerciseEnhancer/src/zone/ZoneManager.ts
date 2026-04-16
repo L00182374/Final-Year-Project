@@ -211,7 +211,6 @@ function getRawZone(params: {
 }
 
 // Step the zone manager forward using the latest sensor state.
-
 export function stepZoneManager(params: {
   input: ZoneManagerInput;
   state: ZoneManagerState;
@@ -230,20 +229,23 @@ export function stepZoneManager(params: {
     config.hrAlpha,
   );
 
-  const cadenceNext = smoothSensorValue(
-    state.cadenceEma,
-    input.cadenceFresh ? input.cadence : null,
-    config.cadenceAlpha,
-  );
+  const cadenceNext =
+    input.cadenceFresh && input.cadence != null
+      ? input.cadence === 0
+        ? 0
+        : smoothSensorValue(state.cadenceEma, input.cadence, config.cadenceAlpha)
+      : null;
 
   const hrSmooth = hrNext == null ? null : Math.round(hrNext);
   const cadenceSmooth = cadenceNext == null ? null : Math.round(cadenceNext);
 
+  // Use the raw current cadence for state classification so stopped pedalling
+  // is detected immediately and is not hidden by smoothing.
   const cadenceState = getCadenceState({
     cadenceRequired: input.cadenceRequired,
     cadenceDeviceConnected: input.cadenceDeviceConnected,
     cadenceFresh: input.cadenceFresh,
-    cadenceRpm: cadenceSmooth,
+    cadenceRpm: input.cadenceFresh ? input.cadence : null,
     minActiveCadenceRpm: config.minActiveCadenceRpm,
     stoppedCadenceRpm: config.stoppedCadenceRpm,
   });
@@ -252,7 +254,9 @@ export function stepZoneManager(params: {
 
   const cadenceSignalLost =
     input.cadenceRequired &&
-    (!input.cadenceDeviceConnected || !input.cadenceFresh || cadenceSmooth == null);
+    (!input.cadenceDeviceConnected ||
+      !input.cadenceFresh ||
+      input.cadence == null);
 
   const hasSignalLoss = hrSignalLost || cadenceSignalLost;
 
