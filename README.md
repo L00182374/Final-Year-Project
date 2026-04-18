@@ -46,7 +46,8 @@ Run the following commands in your terminal/IDE:
    - eas build --profile development --platform android
    - (if necessary)npm audit fix
    - (for starting an expo go server)npx expo start *or if there are connection issues* npx expo start --tunnel
-   - If necessary create an App.tsx file 
+   - If necessary create an App.tsx file
+   - npm install --save-dev jest (--save-dev for installing only for development as users don't need it)
 
 ## Build/Installation Instructions:
    - npx expo prebuild
