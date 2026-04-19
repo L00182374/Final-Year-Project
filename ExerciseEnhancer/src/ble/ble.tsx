@@ -21,7 +21,12 @@ const CSC_MEASUREMENT_CHAR = "2a5b";
 
 // Readings older than these thresholds are treated as stale.
 const HR_STALE_MS = 5000;
-const CADENCE_STALE_MS = 4000;
+
+// Show 0 rpm after no crank movement for this long.
+const CADENCE_STOPPED_MS = 2000;
+
+// Treat cadence as lost only after no packets for longer than the stopped timeout.
+const CADENCE_SIGNAL_LOSS_MS = 7000;
 
 // Delay before retrying a connection after an unexpected disconnect.
 const RECONNECT_DELAY_MS = 2000;
@@ -110,9 +115,9 @@ const BleContext = createContext<BleState | null>(null);
 
 // This provider owns a single BLE manager instance and shares BLE state across the app.
 export function BleProvider({ children }: { children: React.ReactNode }) {
- 
+
   // Keep one BleManager instance alive for the lifetime of the provider.
-  const managerRef = useRef<BleManager | null>(null); 
+  const managerRef = useRef<BleManager | null>(null);
 
   if (!managerRef.current) managerRef.current = new BleManager();
   const manager = managerRef.current;
@@ -144,9 +149,11 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
   // Timestamps of the last valid reading received from each sensor.
   const hrLastSeenAtRef = useRef<number | null>(null);
   const cadenceLastSeenAtRef = useRef<number | null>(null);
+  const cadenceLastMovementAtRef = useRef<number | null>(null);
 
   // Used to calculate cadence from successive crank revolution samples.
   const lastCrankRef = useRef<{ revs: number; time: number } | null>(null);
+  const cadenceStoppedRef = useRef(false);
 
   const hrMonitorSubRef = useRef<Removable | null>(null);
   const cadenceMonitorSubRef = useRef<Removable | null>(null);
@@ -175,8 +182,19 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
   // Clear the current cadence value and reset the previous crank sample.
   function clearCadenceReading() {
     cadenceLastSeenAtRef.current = null;
+    cadenceLastMovementAtRef.current = null;
     setCadenceFresh(false);
     setCadence(null);
+    lastCrankRef.current = null;
+    cadenceStoppedRef.current = false;
+  }
+
+  function markCadenceStopped() {
+    setCadence(0);
+    setCadenceFresh(true);
+    cadenceStoppedRef.current = true;
+
+    // Reset the previous crank sample so resumed pedalling starts from a fresh baseline.
     lastCrankRef.current = null;
   }
 
@@ -304,31 +322,46 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
           }
           if (!char?.value) return;
 
+          const nowMs = Date.now();
+          cadenceLastSeenAtRef.current = nowMs;
+          setCadenceFresh(true);
+
           const parsed = parseCSC(char.value);
           if (!parsed) return;
 
           const currRevs = parsed.cumulativeCrankRevs;
           const currTime = parsed.lastCrankEventTime;
 
-          // Cadence is calculated from the change in crank revolutions over the change in event time.
           const prev = lastCrankRef.current;
-          if (prev) {
-            let dRevs = currRevs - prev.revs;
-            if (dRevs < 0) dRevs += 0x10000;
 
-            let dTimeRaw = currTime - prev.time;
-            if (dTimeRaw < 0) dTimeRaw += 0x10000;
+          // The first crank packet is only used as the starting point for the next calculation.
+          if (!prev) {
+            lastCrankRef.current = { revs: currRevs, time: currTime };
+            cadenceLastMovementAtRef.current = nowMs;
+            cadenceStoppedRef.current = false;
+            return;
+          }
 
+          // Cadence is calculated from the change in crank revolutions over the change in event time.
+          let dRevs = currRevs - prev.revs;
+          if (dRevs < 0) dRevs += 0x10000;
+
+          let dTimeRaw = currTime - prev.time;
+          if (dTimeRaw < 0) dTimeRaw += 0x10000;
+
+          // Only update cadence when actual crank movement has occurred.
+          if (dRevs > 0 && dTimeRaw > 0) {
             const dSec = dTimeRaw / 1024.0;
+
             if (dSec > 0) {
               const rpm = (dRevs / dSec) * 60.0;
               setCadence(Math.max(0, Math.round(rpm)));
+              cadenceLastMovementAtRef.current = nowMs;
+              cadenceStoppedRef.current = false;
             }
           }
 
           lastCrankRef.current = { revs: currRevs, time: currTime };
-          cadenceLastSeenAtRef.current = Date.now();
-          setCadenceFresh(true);
         }
       );
     } catch (e) {
@@ -381,8 +414,16 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (
+        cadenceLastMovementAtRef.current != null &&
+        now - cadenceLastMovementAtRef.current > CADENCE_STOPPED_MS &&
+        !cadenceStoppedRef.current
+      ) {
+        markCadenceStopped();
+      }
+
+      if (
         cadenceLastSeenAtRef.current != null &&
-        now - cadenceLastSeenAtRef.current > CADENCE_STALE_MS
+        now - cadenceLastSeenAtRef.current > CADENCE_SIGNAL_LOSS_MS
       ) {
         clearCadenceReading();
       }
@@ -411,11 +452,11 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
 
       try {
         manager.stopDeviceScan();
-      } catch {}
+      } catch { }
 
       try {
         manager.destroy();
-      } catch {}
+      } catch { }
     };
   }, [manager]);
 
@@ -483,7 +524,7 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
   const stopScan = () => {
     try {
       manager.stopDeviceScan();
-    } catch {}
+    } catch { }
     setIsScanning(false);
   };
 
@@ -597,6 +638,10 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
           }
           if (!char?.value) return;
 
+          const nowMs = Date.now();
+          cadenceLastSeenAtRef.current = nowMs;
+          setCadenceFresh(true);
+
           const parsed = parseCSC(char.value);
           if (!parsed) return;
 
@@ -604,23 +649,35 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
           const currTime = parsed.lastCrankEventTime;
 
           const prev = lastCrankRef.current;
-          if (prev) {
-            let dRevs = currRevs - prev.revs;
-            if (dRevs < 0) dRevs += 0x10000;
 
-            let dTimeRaw = currTime - prev.time;
-            if (dTimeRaw < 0) dTimeRaw += 0x10000;
+          // The first crank packet is only used as the starting point for the next calculation.
+          if (!prev) {
+            lastCrankRef.current = { revs: currRevs, time: currTime };
+            cadenceLastMovementAtRef.current = nowMs;
+            cadenceStoppedRef.current = false;
+            return;
+          }
 
+          // Cadence is calculated from the change in crank revolutions over the change in event time.
+          let dRevs = currRevs - prev.revs;
+          if (dRevs < 0) dRevs += 0x10000;
+
+          let dTimeRaw = currTime - prev.time;
+          if (dTimeRaw < 0) dTimeRaw += 0x10000;
+
+          // Only update cadence when actual crank movement has occurred.
+          if (dRevs > 0 && dTimeRaw > 0) {
             const dSec = dTimeRaw / 1024.0;
+
             if (dSec > 0) {
               const rpm = (dRevs / dSec) * 60.0;
               setCadence(Math.max(0, Math.round(rpm)));
+              cadenceLastMovementAtRef.current = nowMs;
+              cadenceStoppedRef.current = false;
             }
           }
 
           lastCrankRef.current = { revs: currRevs, time: currTime };
-          cadenceLastSeenAtRef.current = Date.now();
-          setCadenceFresh(true);
         }
       );
     } catch (e) {

@@ -15,8 +15,8 @@ export type MediaRuleState = {
 };
 
 export const defaultMediaRuleConfig: MediaRuleConfig = {
-  pauseAfterMs: 4_000,
-  resumeAfterMs: 2_000,
+  pauseAfterMs: 1_000,
+  resumeAfterMs: 1_000,
   enabled: true,
 };
 
