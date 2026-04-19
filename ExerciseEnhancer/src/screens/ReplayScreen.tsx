@@ -171,7 +171,7 @@ export default function ReplayScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 <Text style={{ color: "white", fontSize: 22, fontWeight: "800" }}>
-                    CSV Replay
+                    Session/CSV Replay
                 </Text>
 
                 <Text style={{ color: "#a3a3a3", marginTop: 6 }}>

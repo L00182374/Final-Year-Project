@@ -1,5 +1,8 @@
 // src/media/pcMedia.ts
 
+// the PC and the device running the expo app must be on the same local network for this to work.
+
+//run ipconfig in cmd/powershell to get the IP address of the PC that will be used for media, and replace the placeholder IP below with the PCs IP. 
 const PC_MEDIA_BASE_URL = "http://00.00.00.00:8765";//placeholder IP, I add my own PCs IP when running. 
 
 // function to send requests to the PC media helper python script.
