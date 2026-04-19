@@ -1,12 +1,23 @@
 // src/screens/CalibrationScreen.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert, TextInput } from "react-native";
+import { useKeepAwake } from "expo-keep-awake"; // to prevent screen from sleeping during calibration
 import { useRouter } from "expo-router";
 import { useBle } from "../ble/ble";
 import { setVt1 } from "../storage/userPrefs";
 import Screen from "../ui/Screen";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
 
 const STAGE_SECONDS = 180; // 3 minutes per stage.
+
+const TALK_TEST_PASSAGE =
+  "The quick brown fox jumps over the lazy dog. " +
+  "Reading aloud at a steady pace helps to judge when speaking feels comfortable, slightly harder, or no longer sustainable. " +
+  "I should continue pedalling smoothly and focus on whether I can still speak in full sentences without strain.";
 
 const STAGES = [
   { title: "Stage 1: Easy", subtitle: "Comfortable pace. you can talk normally." },
@@ -17,6 +28,7 @@ const STAGES = [
 export default function CalibrationScreen() {
   const router = useRouter();
   const { startScan, stopScan, isScanning, heartRate, hrDevice } = useBle();
+  useKeepAwake();
 
   const [running, setRunning] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
@@ -61,7 +73,7 @@ export default function CalibrationScreen() {
       try {
         await setVt1(vt1);
         Alert.alert("Saved", `VT1 saved as ${Math.round(vt1)} bpm`, [
-        { text: "OK", onPress: () => router.replace("/home") },//waits until the user selects ok before loading home screen
+          { text: "OK", onPress: () => router.replace("/home") },//waits until the user selects ok before loading home screen
         ]);
       } catch (e) {
         console.warn("save vt1 failed", e);
@@ -185,141 +197,176 @@ export default function CalibrationScreen() {
 
   return ( //Wrapping it all in screen to apply consistent ui.
     <Screen>
-      <View style={{ flex: 1, backgroundColor: "#0b0b0f", padding: 16 }}>
-        <Text style={{ color: "white", fontSize: 22, fontWeight: "700" }}>VT1 Calibration</Text>
-        <Text style={{ color: "#a3a3a3", marginTop: 6 }}>
-          Staged talk test. Stop any time if you feel uncomfortable.
-        </Text>
-
-        <View style={{ marginTop: 16, backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
-          <Text style={{ color: "#a3a3a3" }}>Sensor</Text>
-          <Text style={{ color: "white", marginTop: 6 }}>
-            HR: {heartRate != null ? `${heartRate} bpm` : "--"}
-          </Text>
-          <Text style={{ color: "#a3a3a3", marginTop: 6 }}>
-            Scanning: {isScanning ? "Yes" : "No"}
-          </Text>
-
-          <Pressable
-            onPress={() => void startScan()}
-            style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: "#20202b" }}
-          >
-            <Text style={{ color: "white", fontWeight: "600", textAlign: "center" }}>
-              Scan for sensors
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "android" ? "padding" : undefined}
+        keyboardVerticalOffset={24}
+      >
+        <ScrollView
+          style={{ flex: 1, backgroundColor: "#0b0b0f" }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={{ flex: 1, backgroundColor: "#0b0b0f", padding: 16 }}>
+            <Text style={{ color: "white", fontSize: 22, fontWeight: "700" }}>VT1 Calibration</Text>
+            <Text style={{ color: "#a3a3a3", marginTop: 6 }}>
+              Staged talk test. Stop any time if you feel uncomfortable.
             </Text>
-          </Pressable>
-        </View>
 
-        {!running ? (
-          <View style={{ marginTop: 16, gap: 12 }}>
-            <View style={{ backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
-              <Text style={{ color: "white", fontWeight: "700" }}>How it works</Text>
-              <Text style={{ color: "#a3a3a3", marginTop: 8, lineHeight: 20 }}>
-                You&apos;ll cycle through 3 stages at 3 minutes each. When you first notice you can&apos;t speak
-                comfortably, tap I can&apos;t speak.
+            <View style={{ marginTop: 16, backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
+              <Text style={{ color: "#a3a3a3" }}>Sensor</Text>
+              <Text style={{ color: "white", marginTop: 6 }}>
+                HR: {heartRate != null ? `${heartRate} bpm` : "--"}
               </Text>
+              <Text style={{ color: "#a3a3a3", marginTop: 6 }}>
+                Scanning: {isScanning ? "Yes" : "No"}
+              </Text>
+
+              <Pressable
+                onPress={() => void startScan()}
+                style={{ marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: "#20202b" }}
+              >
+                <Text style={{ color: "white", fontWeight: "600", textAlign: "center" }}>
+                  Scan for sensors
+                </Text>
+              </Pressable>
             </View>
 
-            <Pressable
-              onPress={begin}
-              style={{ padding: 14, borderRadius: 14, backgroundColor: "#16a34a" }}
-            >
-              <Text style={{ color: "white", fontWeight: "800", textAlign: "center" }}>
-                Start calibration
-              </Text>
-            </Pressable>
+            {!running ? (
+              <View style={{ marginTop: 16, gap: 12 }}>
+                <View style={{ backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
+                  <Text style={{ color: "white", fontWeight: "700" }}>How it works</Text>
+                  <Text style={{ color: "#a3a3a3", marginTop: 8, lineHeight: 20 }}>
+                    You&apos;ll cycle through 3 stages at 3 minutes each. When you first notice you can&apos;t speak
+                    comfortably, tap I can&apos;t speak.
+                  </Text>
+                </View>
 
-            <Pressable
-              onPress={startManualEntry}
-              style={{ padding: 14, borderRadius: 14, backgroundColor: "#20202b" }}
-            >
-              <Text style={{ color: "white", fontWeight: "800", textAlign: "center" }}>
-                Enter VT1 manually
-              </Text>
-            </Pressable>
+                <Pressable
+                  onPress={begin}
+                  style={{ padding: 14, borderRadius: 14, backgroundColor: "#16a34a" }}
+                >
+                  <Text style={{ color: "white", fontWeight: "800", textAlign: "center" }}>
+                    Start calibration
+                  </Text>
+                </Pressable>
 
-            {showManual && (
-              <View style={{ backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
-                <Text style={{ color: "white", fontWeight: "800" }}>Manual VT1 (bpm)</Text>
-                <Text style={{ color: "#a3a3a3", marginTop: 6, lineHeight: 20 }}>
-                  Only do this if you already know your VT1. Otherwise run the calibration above.
-                </Text>
-
-                <TextInput
-                  value={manualVt1Text}
-                  onChangeText={setManualVt1Text}
-                  placeholder="example: 145"
-                  placeholderTextColor="#6b7280"
-                  keyboardType="number-pad"
+                <View
                   style={{
                     marginTop: 12,
-                    padding: 12,
-                    borderRadius: 12,
-                    backgroundColor: "#20202b",
-                    color: "white",
-                    fontSize: 18,
+                    backgroundColor: "#14141c",
+                    borderRadius: 16,
+                    padding: 14,
                   }}
-                />
+                >
+                  <Text style={{ color: "#a3a3a3", marginBottom: 8 }}>
+                    Talk test passage
+                  </Text>
 
-                <View style={{ flexDirection: "row", gap: 12, marginTop: 12 }}>
-                  <Pressable
-                    onPress={() => setShowManual(false)}
-                    style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: "#20202b" }}
-                  >
-                    <Text style={{ color: "white", fontWeight: "800", textAlign: "center" }}>
-                      Cancel
-                    </Text>
-                  </Pressable>
+                  <Text style={{ color: "white", lineHeight: 22 }}>
+                    {TALK_TEST_PASSAGE}
+                  </Text>
 
-                  <Pressable
-                    onPress={submitManualVt1}
-                    style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: "#2563eb" }}
-                  >
-                    <Text style={{ color: "white", fontWeight: "900", textAlign: "center" }}>
-                      Save VT1
-                    </Text>
-                  </Pressable>
+                  <Text style={{ color: "#a3a3a3", marginTop: 10, fontSize: 12 }}>
+                    Read this aloud continuously during the stage and press when speaking aloud stops
+                    feeling comfortable.
+                  </Text>
                 </View>
+
+                <Pressable
+                  onPress={startManualEntry}
+                  style={{ padding: 14, borderRadius: 14, backgroundColor: "#20202b" }}
+                >
+                  <Text style={{ color: "white", fontWeight: "800", textAlign: "center" }}>
+                    Enter VT1 manually
+                  </Text>
+                </Pressable>
+
+                {showManual && (
+                  <View style={{ backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
+                    <Text style={{ color: "white", fontWeight: "800" }}>Manual VT1 (bpm)</Text>
+                    <Text style={{ color: "#a3a3a3", marginTop: 6, lineHeight: 20 }}>
+                      Only do this if you already know your VT1. Otherwise run the calibration above.
+                    </Text>
+
+                    <TextInput
+                      value={manualVt1Text}
+                      onChangeText={setManualVt1Text}
+                      placeholder="example: 145"
+                      placeholderTextColor="#6b7280"
+                      keyboardType="number-pad"
+                      style={{
+                        marginTop: 12,
+                        padding: 12,
+                        borderRadius: 12,
+                        backgroundColor: "#20202b",
+                        color: "white",
+                        fontSize: 18,
+                      }}
+                    />
+
+                    <View style={{ flexDirection: "row", gap: 12, marginTop: 12 }}>
+                      <Pressable
+                        onPress={() => setShowManual(false)}
+                        style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: "#20202b" }}
+                      >
+                        <Text style={{ color: "white", fontWeight: "800", textAlign: "center" }}>
+                          Cancel
+                        </Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={submitManualVt1}
+                        style={{ flex: 1, padding: 12, borderRadius: 12, backgroundColor: "#2563eb" }}
+                      >
+                        <Text style={{ color: "white", fontWeight: "900", textAlign: "center" }}>
+                          Save VT1
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={{ marginTop: 16, gap: 12 }}>
+                <View style={{ backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
+                  <Text style={{ color: "white", fontWeight: "800" }}>
+                    {stage.title} — {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                  </Text>
+                  <Text style={{ color: "#a3a3a3", marginTop: 6 }}>{stage.subtitle}</Text>
+
+                  <View style={{ marginTop: 16, alignItems: "center" }}>
+                    <Text style={{ color: "white", fontSize: 44, fontWeight: "900" }}>
+                      {heartRate != null ? heartRate : "--"}
+                    </Text>
+                    <Text style={{ color: "#a3a3a3", marginTop: 4 }}>bpm</Text>
+                    <ActivityIndicator style={{ marginTop: 12 }} />
+                  </View>
+                </View>
+
+                <Pressable
+                  onPress={cantSpeakNow}
+                  style={{ padding: 14, borderRadius: 14, backgroundColor: "#ef4444" }}
+                >
+                  <Text style={{ color: "white", fontWeight: "900", textAlign: "center" }}>
+                    I can&apos;t speak comfortably
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setRunning(false)}
+                  style={{ padding: 14, borderRadius: 14, backgroundColor: "#20202b" }}
+                >
+                  <Text style={{ color: "white", fontWeight: "700", textAlign: "center" }}>
+                    Pause / stop
+                  </Text>
+                </Pressable>
               </View>
             )}
           </View>
-        ) : (
-          <View style={{ marginTop: 16, gap: 12 }}>
-            <View style={{ backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
-              <Text style={{ color: "white", fontWeight: "800" }}>
-                {stage.title} — {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
-              </Text>
-              <Text style={{ color: "#a3a3a3", marginTop: 6 }}>{stage.subtitle}</Text>
-
-              <View style={{ marginTop: 16, alignItems: "center" }}>
-                <Text style={{ color: "white", fontSize: 44, fontWeight: "900" }}>
-                  {heartRate != null ? heartRate : "--"}
-                </Text>
-                <Text style={{ color: "#a3a3a3", marginTop: 4 }}>bpm</Text>
-                <ActivityIndicator style={{ marginTop: 12 }} />
-              </View>
-            </View>
-
-            <Pressable
-              onPress={cantSpeakNow}
-              style={{ padding: 14, borderRadius: 14, backgroundColor: "#ef4444" }}
-            >
-              <Text style={{ color: "white", fontWeight: "900", textAlign: "center" }}>
-                I can&apos;t speak comfortably
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setRunning(false)}
-              style={{ padding: 14, borderRadius: 14, backgroundColor: "#20202b" }}
-            >
-              <Text style={{ color: "white", fontWeight: "700", textAlign: "center" }}>
-                Pause / stop
-              </Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
