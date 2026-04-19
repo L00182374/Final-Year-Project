@@ -74,6 +74,15 @@ export default function HomeScreen() {
         </Pressable>
 
         <Pressable
+          onPress={() => router.push("/replay")}
+          style={{ padding: 14, borderRadius: 14, backgroundColor: "#972020" }}
+        >
+          <Text style={{ color: "white", fontWeight: "800", textAlign: "center" }}>
+            Replay saved Workout/CSV
+          </Text>
+        </Pressable>
+
+        <Pressable
           onPress={() => router.push("/calibration")}
           style={{ padding: 14, borderRadius: 14, backgroundColor: "#20202b" }}
         >
