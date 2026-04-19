@@ -515,7 +515,8 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
         const looksLikeHr =
           name.includes("pixel") ||
           name.includes("garmin") ||
-          name.includes("polar");
+          name.includes("polar") ||
+          name.includes("hrm");
 
         const looksLikeCadence =
           name.includes("wahoo") || name.includes("rpm");
