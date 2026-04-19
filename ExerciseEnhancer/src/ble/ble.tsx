@@ -10,6 +10,7 @@ import React, {
 import { BleManager, Device } from "react-native-ble-plx";
 import { Buffer } from "buffer";
 import { requestBlePermissions } from "./permissions";
+import { Alert } from "react-native";
 
 // Standard BLE Heart Rate service and measurement characteristic.
 const HR_SERVICE = "180d";
@@ -460,13 +461,31 @@ export function BleProvider({ children }: { children: React.ReactNode }) {
     };
   }, [manager]);
 
-  // Start scanning for nearby BLE devices and auto detect likely HR and cadence sensors.
+  // Start scanning for nearby BLE devices and auto detect likely HR and cadence sensors. 
   const startScan = async () => {
     if (isScanning) return;
 
     const ok = await requestBlePermissions();
     if (!ok) {
       console.warn("BLE permissions not granted");
+      return;
+    }
+
+    //Warn if permissions are not granted or bluetooth is off.
+    const bluetoothState = await manager.state();
+
+    if (bluetoothState !== "PoweredOn") {
+      if (bluetoothState === "PoweredOff") {
+        Alert.alert(
+          "Bluetooth is off",
+          "Turn on Bluetooth and try scanning again.",
+        );
+      } else {
+        Alert.alert(
+          "Bluetooth unavailable",
+          `Bluetooth is currently in state: ${bluetoothState}.`,
+        );
+      }
       return;
     }
 
