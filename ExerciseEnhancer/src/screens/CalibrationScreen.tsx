@@ -252,28 +252,6 @@ export default function CalibrationScreen() {
                   </Text>
                 </Pressable>
 
-                <View
-                  style={{
-                    marginTop: 12,
-                    backgroundColor: "#14141c",
-                    borderRadius: 16,
-                    padding: 14,
-                  }}
-                >
-                  <Text style={{ color: "#a3a3a3", marginBottom: 8 }}>
-                    Talk test passage
-                  </Text>
-
-                  <Text style={{ color: "white", lineHeight: 22 }}>
-                    {TALK_TEST_PASSAGE}
-                  </Text>
-
-                  <Text style={{ color: "#a3a3a3", marginTop: 10, fontSize: 12 }}>
-                    Read this aloud continuously during the stage and press when speaking aloud stops
-                    feeling comfortable.
-                  </Text>
-                </View>
-
                 <Pressable
                   onPress={startManualEntry}
                   style={{ padding: 14, borderRadius: 14, backgroundColor: "#20202b" }}
@@ -343,6 +321,28 @@ export default function CalibrationScreen() {
                     <Text style={{ color: "#a3a3a3", marginTop: 4 }}>bpm</Text>
                     <ActivityIndicator style={{ marginTop: 12 }} />
                   </View>
+                </View>
+                
+                <View
+                  style={{
+                    marginTop: 12,
+                    backgroundColor: "#14141c",
+                    borderRadius: 16,
+                    padding: 14,
+                  }}
+                >
+                  <Text style={{ color: "#a3a3a3", marginBottom: 8 }}>
+                    Talk test passage
+                  </Text>
+
+                  <Text style={{ color: "white", lineHeight: 22 }}>
+                    {TALK_TEST_PASSAGE}
+                  </Text>
+
+                  <Text style={{ color: "#a3a3a3", marginTop: 10, fontSize: 12 }}>
+                    Read this aloud continuously during the stage and press when speaking aloud stops
+                    feeling comfortable.
+                  </Text>
                 </View>
 
                 <Pressable
