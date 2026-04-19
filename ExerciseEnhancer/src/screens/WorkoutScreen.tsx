@@ -44,6 +44,7 @@ import { saveSessionCsv } from "../logging/sessionStorage";
 import type { SessionRecord } from "../logging/sessionTypes";
 import { usePcMediaAvailability } from "../media/usePCMediaAvailability";
 import { pausePcMedia, playPcMedia } from "../media/pcMedia";
+import { useKeepAwake } from "expo-keep-awake";
 
 function formatDuration(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
@@ -64,6 +65,7 @@ function pushTrendValue(
 
 export default function WorkoutScreen() {
   const navigation = useNavigation();
+  useKeepAwake();// prevent screen from sleeping during workout
   const { ready: audioReady, isPlaying, play, pause } = useInAppAudio();
 
   const [simulateZone, setSimulateZone] = useState(false);
