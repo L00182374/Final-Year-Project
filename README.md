@@ -4,6 +4,10 @@ Project Title: A sensor fusion system for maintaining zone 2 training and enhanc
 Description: The project consists of a react native/expo mobile application, multiple BLE sensors (Wahoo RPM Cadence, Garmin Chest strap and Google Pixel Watch 3) and a Python Media controller that controls media playback in real time based on the zone of the user. 
 The purpose of the project is to create an application that bolsters user motivation and simultaneously enhances the quality of their training via sensor fusion. 
 
+<p align="center">
+  <img src="./Project%20Demonstration/Video/Final%20Year%20Project%20Video.gif" alt="Project Demo" />
+</p>
+
 ## Setup Requirements:
    - Node.js latest
    - Node Package Manager latest
