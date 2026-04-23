@@ -310,7 +310,7 @@ export default function CalibrationScreen() {
               <View style={{ marginTop: 16, gap: 12 }}>
                 <View style={{ backgroundColor: "#14141c", borderRadius: 16, padding: 14 }}>
                   <Text style={{ color: "white", fontWeight: "800" }}>
-                    {stage.title} — {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                    {stage.title}: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
                   </Text>
                   <Text style={{ color: "#a3a3a3", marginTop: 6 }}>{stage.subtitle}</Text>
 
@@ -322,7 +322,7 @@ export default function CalibrationScreen() {
                     <ActivityIndicator style={{ marginTop: 12 }} />
                   </View>
                 </View>
-                
+
                 <View
                   style={{
                     marginTop: 12,
